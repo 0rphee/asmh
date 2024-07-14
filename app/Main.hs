@@ -13,11 +13,12 @@ main = do
   -- putStrLn $ "FILEPATH: " <> toFilePath sourceCodeFile
   let assemblyCode =
         T.unlines
-          -- [ "start: MOV AX, 1234   ; commment ;; coomeeeent"
-          -- , "; comment          SUB CX, DX"
-          -- , " SUB AX, DX"
-          -- ]
-          [ "ORG 100h"
+          [ "start: MOV AX, 1234 ; commment ;; coomeeeent"
+          , "; comment          SUB CX, DX"
+          , "SUB AX, DX"
+          , -- ]
+            -- [
+            "ORG 100h"
           , "MOV AL, 00000111b   ; AL = 7"
           , "OR  AL, 0           ; just set flags."
           , "JNS label1"
