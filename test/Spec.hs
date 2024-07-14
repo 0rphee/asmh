@@ -1,4 +1,6 @@
-module Main (main) where
+{-# LANGUAGE BinaryLiterals #-}
+
+module Main where
 
 -- import Control.Monad.ST
 -- import Data.ByteString.Char8 as B
@@ -8,15 +10,63 @@ module Main (main) where
 -- import FlatParse.Stateful
 -- import Parser qualified as P
 -- import Scanner qualified as S
--- import Test.Tasty
--- import Test.Tasty.HUnit
+
+import Bits.Show (showFiniteBits)
+import Data.Attoparsec.Text
+import Data.Text (Text)
+import Data.Text qualified as T
+import Data.Word
+import Expr
+import Numeric (showHex)
+import Test.Tasty
+import Test.Tasty.HUnit
+
 -- import Test.Tasty.QuickCheck
 -- import Token
 
-main :: IO ()
-main = putStrLn "tests not implemented"
+data ImmediateLitType = Dec | Hex | Bin
 
--- main = defaultMain tests
+class ToHexString a where
+  toHexString :: a -> String
+
+instance ToHexString Word8 where
+  toHexString w = pad2 $ showHex w ""
+    where
+      pad2 s = replicate (2 - length s) '0' ++ s
+
+instance ToHexString Word16 where
+  toHexString w = pad4 $ showHex w ""
+    where
+      pad4 s = replicate (4 - length s) '0' ++ s
+
+main :: IO ()
+main = defaultMain tests
+
+tests :: TestTree
+tests =
+  testGroup
+    "Tests"
+    [ testGroup
+        "Basic parsing tests"
+        [ testGroup
+            "parseImmediate16"
+            [ testCaseNum Bin 0b1010_1010 parseImmediate8
+            , testCaseNum Bin 0b1010_1010_1010_1010 parseImmediate16
+            , testCaseNum Hex 0x2A parseImmediate8
+            , testCaseNum Hex 0x0B01 parseImmediate16
+            ]
+        ]
+    ]
+  where
+    testCaseNum litType num fun = testCase ("parse " <> numStr <> " as " <> show num) $ do
+      case parseOnly fun (T.pack numStr) of
+        Left e -> assertFailure e
+        Right v -> v @?= num
+      where
+        numStr = case litType of
+          Dec -> show num
+          Hex -> toHexString num <> "h"
+          Bin -> showFiniteBits num <> "b"
 
 -- success :: Assertion
 -- success = pure ()

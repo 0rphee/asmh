@@ -38,6 +38,7 @@ common common-options
 
   default-extensions:
     ApplicativeDo
+    LambdaCase
     OverloadedStrings
     RecordWildCards
 
@@ -54,8 +55,11 @@ library
   build-depends:
     attoparsec,
     base >=4.7 && <5,
+    bits-show,
     bytestring,
+    megaparsec,
     path,
+    text,
 
 executable asmh
   import:
@@ -73,10 +77,12 @@ executable asmh
   build-depends:
     asmh,
     base >=4.7 && <5,
+    bits-show,
     bytestring,
     githash,
     opt-env-conf,
     path,
+    text,
 
 test-suite asmh-test
   import:
@@ -92,8 +98,12 @@ test-suite asmh-test
 
   build-depends:
     asmh,
+    attoparsec,
     base >=4.7 && <5,
+    bits-show,
     bytestring,
+    megaparsec,
     tasty,
     tasty-hunit,
     tasty-quickcheck,
+    text,
