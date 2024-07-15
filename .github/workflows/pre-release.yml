@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: haskell-actions/hlint-setup@v1
       - uses: haskell-actions/hlint-run@v2
 
@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: haskell-actions/run-fourmolu@v10
         with:
           # Only check the format of .hs in any directory inside cwd but not cwd.
@@ -54,7 +54,7 @@ jobs:
     steps:
       # SETUP
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - uses: haskell-actions/setup@v2
         id: setup-haskell-cabal
