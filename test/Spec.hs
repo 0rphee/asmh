@@ -12,7 +12,6 @@ module Main where
 -- import Scanner qualified as S
 
 import Bits.Show (showFiniteBits)
-import Data.Attoparsec.Text
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Word
@@ -20,6 +19,9 @@ import Expr
 import Numeric (showHex)
 import Test.Tasty
 import Test.Tasty.HUnit
+import Text.Megaparsec
+import Text.Megaparsec.Char
+import Text.Megaparsec.Char.Lexer qualified as L
 
 -- import Test.Tasty.QuickCheck
 -- import Token
@@ -58,9 +60,9 @@ tests =
         ]
     ]
   where
-    testCaseNum litType num fun = testCase ("parse " <> numStr <> " as " <> show num) $ do
-      case parseOnly fun (T.pack numStr) of
-        Left e -> assertFailure e
+    testCaseNum litType num parsingFunc = testCase ("parse " <> numStr <> " as " <> show num) $ do
+      case parse parsingFunc "test" (T.pack numStr) of
+        Left e -> assertFailure $ errorBundlePretty e
         Right v -> v @?= num
       where
         numStr = case litType of

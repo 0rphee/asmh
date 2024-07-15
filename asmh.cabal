@@ -50,13 +50,14 @@ library
     src
 
   exposed-modules:
+    Bin
     Expr
 
   build-depends:
-    attoparsec,
     base >=4.7 && <5,
     bits-show,
     bytestring,
+    cereal,
     megaparsec,
     path,
     text,
@@ -79,6 +80,7 @@ executable asmh
     base >=4.7 && <5,
     bits-show,
     bytestring,
+    cereal,
     githash,
     opt-env-conf,
     path,
@@ -98,7 +100,6 @@ test-suite asmh-test
 
   build-depends:
     asmh,
-    attoparsec,
     base >=4.7 && <5,
     bits-show,
     bytestring,
