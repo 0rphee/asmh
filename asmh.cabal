@@ -82,10 +82,11 @@ executable asmh
     bytestring,
     cereal,
     githash,
-    opt-env-conf,
+    optparse-applicative,
     path,
     text,
 
+-- opt-env-conf,
 test-suite asmh-test
   import:
     common-options

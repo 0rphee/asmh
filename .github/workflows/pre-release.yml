@@ -25,8 +25,8 @@ jobs:
     if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v3
-      - uses: haskell/actions/hlint-setup@v1
-      - uses: haskell/actions/hlint-run@v2
+      - uses: haskell-actions/hlint-setup@v1
+      - uses: haskell-actions/hlint-run@v2
 
   fourmolu:
     runs-on: ubuntu-latest
@@ -39,118 +39,83 @@ jobs:
           pattern: |
             */**/*.hs
 
-  create_release:
-    name: Create Github Release
-    runs-on: ubuntu-latest
-    permissions: write-all
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v4
-
-      - name: Create short commit sha
-        run: echo "GITHUB_SHA_SHORT=$(echo $GITHUB_SHA | cut -c 1-10)" >> $GITHUB_ENV
-
-      - name: Create Pre-release
-        id: create_release
-        uses: actions/create-release@v1.1.4
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          name: Pre-release ${{ env.GITHUB_SHA_SHORT }}
-          tag_name: Pre-release-${{ env.GITHUB_SHA_SHORT }}
-          release_name: Pre-release ${{ github.ref }}
-          draft: true
-          prerelease: true
-
-      - name: Output Release URL File
-        run: echo "${{ steps.create_release.outputs.upload_url }}" > release_url.txt
-
-      - name: Save Release URL File for publish
-        uses: actions/upload-artifact@v3
-        with:
-          name: release_url
-          path: release_url.txt
-
-  build_artifact:
-    needs: [create_release]
-    name: ${{ matrix.os }}/GHC ${{ matrix.ghc }}/${{ github.ref }}
+  build-binaries:
+    name: Build and upload binaries (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
-      # Don't fail fast because we test a lot of versions and it's
-      # good to know which ones work and which ones don't
-      fail-fast: false
       matrix:
-        os: [ubuntu-latest, macOS-latest, windows-latest]
-        ghc:
-          - "9.6.5"
-        cabal: ["latest"]
-
+        include:
+          - os: ubuntu-latest
+            extra-build-args: -j2
+          - os: macos-latest
+            extra-build-args: -j3
+          - os: windows-latest
+            extra-build-args: -j2
     steps:
-      - name: Check out code
-        uses: actions/checkout@v4
+      # SETUP
+      - name: Checkout repo
+        uses: actions/checkout@v3
 
-      - name: Setup Haskell
-        uses: haskell/actions/setup@v2
+      - uses: haskell-actions/setup@v2
         id: setup-haskell-cabal
         with:
-          ghc-version: ${{ matrix.ghc }}
-          cabal-version: ${{ matrix.cabal }}
+          ghc-version: '9.6.5'
 
-      - name: Freeze
-        run: |
-          cabal freeze
-
+      # CACHING
       - name: Cache ~/.cabal/store
-        uses: actions/cache@v4
+        uses: actions/cache@v3
         with:
           path: ${{ steps.setup-haskell-cabal.outputs.cabal-store }}
           key: ${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project.freeze') }}
 
-      - name: Build binary
+      - name: Build binary (${{ runner.os }})
+        shell: bash
         run: |
-          mkdir dist
-          cabal install exe:asmh --install-method=copy --overwrite-policy=always --installdir=dist
+          mkdir "$(pwd)/asmh-${{ runner.os }}"
+          cabal install exe:asmh --install-method=copy --overwrite-policy=always --installdir="$(pwd)/asmh-${{ runner.os }}" --ghc-options=-O2 ${{ matrix.extra-build-args }}
 
-      # See Note [environment variables]
-      - if: matrix.os == 'windows-latest'
-        name: Set binary path name on Windows
-        run: echo "BINARY_PATH=./dist/asmh.exe" >> $env:GITHUB_ENV
+      # UPLOAD BINARIES
+      - name: Compress dirs (Unix)
+        if: matrix.os != 'windows-latest'
+        shell: bash
+        run: zip -r asmh-${{ runner.os }}.zip asmh-${{ runner.os }}
 
-      # See Note [environment variables]
-      - if: matrix.os != 'windows-latest'
-        name: Set binary path name not on Windows
-        run: echo "BINARY_PATH=./dist/asmh" >> "$GITHUB_ENV"
+      - name: Compress dirs (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: Compress-Archive -Path "asmh-${{ runner.os }}" -DestinationPath "asmh-${{ runner.os }}.zip"
 
-      - name: Compress binary
-        uses: svenstaro/upx-action@2.3.0
+
+      - name: Upload artifact (${{ runner.os }})
+        uses: actions/upload-artifact@v3
         with:
-          file: ${{ env.BINARY_PATH }}
+          name: asmh-${{ runner.os }}
+          path: asmh-${{ runner.os }}.zip
+          if-no-files-found: error
 
-      - name: Load Release URL File from release job
-        uses: actions/download-artifact@v3
+  pre-release:
+    name: "Pre Release"
+    needs: build-binaries
+    if: github.event_name != 'pull_request'
+    permissions:
+      contents: write
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: actions/download-artifact@v3
+
+      - name: Check artifacts
+        run: ls -R
+
+      - name: Create short commit sha
+        run: echo "GITHUB_SHA_SHORT=$(echo $GITHUB_SHA | cut -c 1-10)" >> $GITHUB_ENV
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
         with:
-          name: release_url
-          path: release_url
-
-      # See Note [environment variables]
-      - if: matrix.os == 'windows-latest'
-        name: Get Release File Name & Upload URL on Widows
-        run: |
-          echo "upload_url=$(cat release_url/release_url.txt)" >> $env:GITHUB_ENV
-
-      # See Note [environment variables]
-      - if: matrix.os != 'windows-latest'
-        name: Get Release File Name & Upload URL not on Widows
-        run: |
-          echo "upload_url=$(cat release_url/release_url.txt)" >> $GITHUB_ENV
-
-      - name: Upload Release Asset
-        id: upload-release-asset
-        uses: actions/upload-release-asset@v1.0.2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ env.upload_url }}
-          asset_path: ${{ env.BINARY_PATH }}
-          asset_name: asmh-${{ runner.os }}-ghc-${{ matrix.ghc }}${{ env.EXT }}
-          asset_content_type: application/octet-stream
+          name: Pre-release ${{ env.GITHUB_SHA_SHORT }}
+          draft: false
+          prerelease: true
+          tag_name: Pre-release-${{ env.GITHUB_SHA_SHORT }}
+          fail_on_unmatched_files: true
+          generate_release_notes: true
+          files: 'asmh-**/asmh-*'

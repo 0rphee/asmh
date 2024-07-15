@@ -8,28 +8,43 @@ where
 
 import Data.Version (showVersion)
 import GitHash
-import OptEnvConf
-import Path
+import Options.Applicative
 import Paths_asmh (version)
 
 newtype Options = Options
-  { sourceCodeFile :: Path Abs File
+  { sourceCodeFile :: FilePath
   }
 
-instance HasParser Options where
-  settingsParser = do
-    val <-
-      filePathSetting
-        [ help "the file to compile"
-        , argument
-        ]
-    pure $ Options val
-
 runCmdOptions :: IO Options
-runCmdOptions = runSettingsParser version descriptionString
-  where
-    descriptionString = concat ["Run asmh - v", showVersion version, gitInfoString]
+runCmdOptions = execParser options
 
+options :: ParserInfo Options
+options =
+  info
+    (opts <**> helper)
+    ( fullDesc
+        <> header headerString
+        <> progDesc "i8086 assembler"
+        <> footer
+          "source code: https://github.com/0rphee/asmh"
+        <> failureCode 64
+    )
+  where
+    headerString = "asmh - v" <> versionString
+
+opts :: Parser Options
+opts =
+  Options
+    <$> strArgument
+      ( metavar "FILENAME"
+          <> help "Input file"
+          <> action "file"
+      )
+      <**> simpleVersioner versionString
+
+versionString :: String
+versionString = showVersion version <> gitInfoString
+  where
     gitInfoString = case $$tGitInfoCwdTry of
       Right gi ->
         concat
@@ -37,9 +52,5 @@ runCmdOptions = runSettingsParser version descriptionString
           , giBranch gi
           , "@"
           , giHash gi
-          , " ("
-          , show $ giCommitCount gi
-          , " commits in HEAD"
-          , ")"
           ]
       _ -> ""

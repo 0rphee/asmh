@@ -10,8 +10,8 @@ import Bin
 
 main :: IO ()
 main = do
-  -- (Options sourceCodeFile) <- runCmdOptions
-  -- putStrLn $ "FILEPATH: " <> toFilePath sourceCodeFile
+  (Options sourceCodeFile) <- runCmdOptions
+  putStrLn $ "FILEPATH: " <> sourceCodeFile
   assemblyCode <- T.readFile "asm/colors.asm"
   -- let assemblyCode =
   --       T.unlines
