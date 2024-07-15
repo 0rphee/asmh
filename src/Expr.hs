@@ -99,25 +99,24 @@ data Directive
 -- Parser for registers
 parseRegister :: Parser Register
 parseRegister =
-  dbg "reg" $
-    choice
-      [ AX <$ string' "AX"
-      , BX <$ string' "BX"
-      , CX <$ string' "CX"
-      , DX <$ string' "DX"
-      , SI <$ string' "SI"
-      , DI <$ string' "DI"
-      , BP <$ string' "BP"
-      , SP <$ string' "SP"
-      , AL <$ string' "AL"
-      , BL <$ string' "BL"
-      , CL <$ string' "CL"
-      , DL <$ string' "DL"
-      , AH <$ string' "AH"
-      , BH <$ string' "BH"
-      , CH <$ string' "CH"
-      , DH <$ string' "DH"
-      ]
+  choice
+    [ AX <$ string' "AX"
+    , BX <$ string' "BX"
+    , CX <$ string' "CX"
+    , DX <$ string' "DX"
+    , SI <$ string' "SI"
+    , DI <$ string' "DI"
+    , BP <$ string' "BP"
+    , SP <$ string' "SP"
+    , AL <$ string' "AL"
+    , BL <$ string' "BL"
+    , CL <$ string' "CL"
+    , DL <$ string' "DL"
+    , AH <$ string' "AH"
+    , BH <$ string' "BH"
+    , CH <$ string' "CH"
+    , DH <$ string' "DH"
+    ]
 
 parseNum :: Num b => Int -> (Char -> Bool) -> Char -> Int -> Parser b
 parseNum base cond ending numberOfDigits = try $ do
@@ -130,7 +129,7 @@ parseNum base cond ending numberOfDigits = try $ do
     textToInt = T.foldl (\acc x -> acc * base + digitToInt x) 0
 
 -- parseBin :: Num b => Int -> Parser b
-parseBin n = dbg ("bin" ++ show n) $ parseNum 2 (\ch -> ch == '0' || ch == '1') 'b' n
+parseBin n = parseNum 2 (\ch -> ch == '0' || ch == '1') 'b' n
 
 parseBin8 :: Parser Word8
 parseBin8 = parseBin 8
@@ -142,7 +141,7 @@ parseBin16 :: Parser Word16
 parseBin16 = parseBin 16
 
 -- parseHex :: Num b => Int -> Parser b
-parseHex n = dbg ("hex" ++ show (n * 4)) $ parseNum 16 isHexDigit 'h' n
+parseHex n = parseNum 16 isHexDigit 'h' n
 
 parseHex8 :: Parser Word8
 parseHex8 = parseHex 2
@@ -172,7 +171,7 @@ parseImmediate8 =
     choice
       [ parseBin8
       , parseHex8
-      , dbg "decimal8" (L.lexeme space1 (L.decimal))
+      , L.lexeme space1 L.decimal
       , parseChar8
       ]
 
@@ -182,7 +181,7 @@ parseImmediate12 =
     choice
       [ parseBin12
       , parseHex12
-      , (dbg "decimal12" (L.lexeme space1 (L.decimal)))
+      , L.lexeme space1 L.decimal
       , parseChar12
       ]
 
@@ -192,7 +191,7 @@ parseImmediate16 =
     choice
       [ parseBin16
       , parseHex16
-      , (dbg "decimal16" (L.lexeme space1 (L.decimal)))
+      , L.lexeme space1 L.decimal
       , parseChar16
       ]
 
@@ -218,9 +217,8 @@ parseOperand =
   label "parsingOperand" $
     choice
       [ RegOp <$> try parseRegister
-      , dbg "immop" $
-          ImmOp
-            <$> ((try (Right <$> parseImmediate16)) <|> try (Left <$> parseImmediate8))
+      , ImmOp
+          <$> (try (Right <$> parseImmediate16) <|> try (Left <$> parseImmediate8))
       , MemOp <$> try parseMemory
       , do
           c <- lookAhead anySingle
@@ -258,7 +256,7 @@ parseDirective =
     , NAME
         <$> ( L.symbol' hspace1 "name" *> between "\"" "\"" (takeWhileP Nothing isAlphaNum)
             )
-    , dbg "ret" $ RET <$ L.symbol' space1 "ret"
+    , RET <$ L.symbol' space1 "ret"
     , parseDBdirective
     ]
   where
