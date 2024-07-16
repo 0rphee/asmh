@@ -18,11 +18,6 @@ import Prelude hiding (take)
 
 type Parser = Parsec Void Text
 
-data ProgramInfo = ProgramInfo
-  { directives :: [Directive]
-  , instructions :: [(String, Instruction)]
-  }
-
 data Register
   = -- | (16 bit) the accumulator register (divided into AH / AL).
     AX
@@ -86,6 +81,7 @@ data Instruction
   | INC Operand
   | CMP Operand Operand
   | JE Label
+  | RET
   deriving (Show, Eq)
 
 data Directive
@@ -93,7 +89,6 @@ data Directive
   | DB (Either (Text, [Word8]) [Word8])
   | END
   | NAME Text
-  | RET
   deriving (Show, Eq)
 
 -- Parser for registers
@@ -241,6 +236,7 @@ parseInstruction =
       , INC <$> (L.symbol' hspace1 "inc" *> parseOperand)
       , binaryP CMP "cmp"
       , JE <$> (L.symbol' hspace1 "je" *> parseVarOrLabelName)
+      , RET <$ L.symbol' hspace "ret"
       ]
   where
     binaryP constr txt =
@@ -256,7 +252,6 @@ parseDirective =
     , NAME
         <$> ( L.symbol' hspace1 "name" *> between "\"" "\"" (takeWhileP Nothing isAlphaNum)
             )
-    , RET <$ L.symbol' space1 "ret"
     , parseDBdirective
     ]
   where
@@ -307,11 +302,10 @@ parseAssembly =
 mainLocal :: Text -> IO (Maybe [Statement])
 mainLocal assemblyCode = do
   case parseAssembly assemblyCode of
-    -- case parseOnly parseLine assemblyCode of
     Left err -> do
       putStrLn "Error: "
       putStrLn $ errorBundlePretty err
       pure Nothing
-    Right instructions -> do
-      traverse_ print instructions
-      pure $ Just instructions
+    Right statements -> do
+      traverse_ print statements
+      pure $ Just statements

@@ -58,9 +58,12 @@ library
     bits-show,
     bytestring,
     cereal,
+    containers,
+    filepath,
     megaparsec,
     path,
     text,
+    vector,
 
 executable asmh
   import:
@@ -81,10 +84,12 @@ executable asmh
     bits-show,
     bytestring,
     cereal,
+    filepath,
     githash,
     optparse-applicative,
     path,
     text,
+    vector,
 
 -- opt-env-conf,
 test-suite asmh-test
