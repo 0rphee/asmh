@@ -13,6 +13,7 @@ jobs:
 
     - uses: haskell-actions/run-fourmolu@v10
       with:
+        version: "0.15.0.0" # per hls 2.9.0.0
         pattern: |
           src
           app

@@ -20,25 +20,6 @@ on:
     tags-ignore:
       - 'v[0-9]+.[0-9]+.[0-9]+'
 jobs:
-  hlint:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    steps:
-      - uses: actions/checkout@v4
-      - uses: haskell-actions/hlint-setup@v1
-      - uses: haskell-actions/hlint-run@v2
-
-  fourmolu:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    steps:
-      - uses: actions/checkout@v4
-      - uses: haskell-actions/run-fourmolu@v10
-        with:
-          # Only check the format of .hs in any directory inside cwd but not cwd.
-          pattern: |
-            */**/*.hs
-
   build-binaries:
     name: Build and upload binaries (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
