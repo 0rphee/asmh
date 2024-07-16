@@ -99,10 +99,10 @@ trans labelMap instrLoc = \case
       putWord16le . either fromIntegral id
 
 firstPass :: [Statement] -> ProgramInfo
-firstPass ls = traceShowId $ go ls 0 (ProgramInfo mempty mempty mempty)
+firstPass ls = go ls 0 (ProgramInfo mempty mempty mempty)
   where
     go :: [Statement] -> Int -> ProgramInfo -> ProgramInfo
-    go [] offset accum = accum
+    go [] _offset accum = accum
     go (x : xs) offset acc = case x of
       Ins newInstr ->
         let newOffset = offset + getInstOffset newInstr

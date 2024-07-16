@@ -12,7 +12,7 @@ main :: IO ()
 main = do
   (Options sourceCodePath) <- runCmdOptions
   putStrLn $ "FILEPATH: " <> sourceCodePath
-  assemblyCode <- T.readFile "asm/colors.asm"
+  assemblyCode <- T.readFile sourceCodePath
   T.putStrLn assemblyCode
   T.putStrLn $ T.replicate 10 "-"
   mayStatements <- Expr.mainLocal assemblyCode

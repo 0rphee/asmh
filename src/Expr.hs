@@ -123,8 +123,8 @@ parseNum base cond ending numberOfDigits = try $ do
     textToInt :: Text -> Int
     textToInt = T.foldl (\acc x -> acc * base + digitToInt x) 0
 
--- parseBin :: Num b => Int -> Parser b
-parseBin n = parseNum 2 (\ch -> ch == '0' || ch == '1') 'b' n
+parseBin :: Num b => Int -> Parser b
+parseBin = parseNum 2 (\ch -> ch == '0' || ch == '1') 'b'
 
 parseBin8 :: Parser Word8
 parseBin8 = parseBin 8
@@ -135,8 +135,8 @@ parseBin12 = parseBin 12
 parseBin16 :: Parser Word16
 parseBin16 = parseBin 16
 
--- parseHex :: Num b => Int -> Parser b
-parseHex n = parseNum 16 isHexDigit 'h' n
+parseHex :: Num b => Int -> Parser b
+parseHex = parseNum 16 isHexDigit 'h'
 
 parseHex8 :: Parser Word8
 parseHex8 = parseHex 2
@@ -307,5 +307,5 @@ mainLocal assemblyCode = do
       putStrLn $ errorBundlePretty err
       pure Nothing
     Right statements -> do
-      traverse_ print statements
+      -- traverse_ print statements
       pure $ Just statements
