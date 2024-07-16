@@ -13,8 +13,8 @@ main = do
   (Options sourceCodePath) <- runCmdOptions
   putStrLn $ "FILEPATH: " <> sourceCodePath
   assemblyCode <- T.readFile sourceCodePath
-  T.putStrLn assemblyCode
-  T.putStrLn $ T.replicate 10 "-"
+  -- T.putStrLn assemblyCode
+  -- T.putStrLn $ T.replicate 10 "-"
   mayStatements <- Expr.mainLocal assemblyCode
   case mayStatements of
     Nothing -> T.putStrLn "No results to be written"

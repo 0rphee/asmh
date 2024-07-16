@@ -49,9 +49,9 @@ getInstOffset = \case
 
 trans :: Map Label Location -> Location -> Instruction -> Put
 trans labelMap instrLoc = \case
-  MOV (RegOp AX) (ImmOp ew) -> putWord8 0xb8 >> treatAsW16 ew
-  MOV (RegOp BX) (ImmOp ew) -> putWord8 0xbb >> treatAsW16 ew
-  MOV (RegOp CX) (ImmOp ew) -> putWord8 0xb9 >> treatAsW16 ew
+  MOV (RegOp AX) (ImmOp ew) -> putWord8 0xb8 >> putAsW16 ew
+  MOV (RegOp BX) (ImmOp ew) -> putWord8 0xbb >> putAsW16 ew
+  MOV (RegOp CX) (ImmOp ew) -> putWord8 0xb9 >> putAsW16 ew
   -- MOV (RegOp DX) (ImmOp ew) -> putWord8 >> putEitherW ew
   MOV (RegOp AH) (ImmOp ew) -> putWord8 0xb4 >> putAsW8 ew
   MOV (RegOp AL) (ImmOp ew) -> putWord8 0xb0 >> putAsW8 ew
@@ -95,7 +95,7 @@ trans labelMap instrLoc = \case
 
     putAsW8 :: Either Word8 Word16 -> Put =
       putWord8 . either id fromIntegral
-    treatAsW16 :: Either Word8 Word16 -> Put =
+    putAsW16 :: Either Word8 Word16 -> Put =
       putWord16le . either fromIntegral id
 
 firstPass :: [Statement] -> ProgramInfo
