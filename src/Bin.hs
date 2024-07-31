@@ -87,16 +87,17 @@ trans labelMap instrLoc = \case
     checkLabel label = case M.lookup label labelMap of
       Nothing -> error $ concat ["Label '", T.unpack label, "' not found'"]
       Just v -> v
-    {-# INLINE putEitherW #-}
-    putEitherW :: Either Word8 Word16 -> Put
-    putEitherW = \case
-      Left w -> putWord8 w
-      Right w -> putWord16le w
+    putAsW8 :: RawValue -> Put =
+      putWord8 . \case
+        W8 w -> w
+        W16 w -> fromIntegral w
+        IntOrChar w -> fromIntegral w
 
-    putAsW8 :: Either Word8 Word16 -> Put =
-      putWord8 . either id fromIntegral
-    putAsW16 :: Either Word8 Word16 -> Put =
-      putWord16le . either fromIntegral id
+    putAsW16 :: RawValue -> Put =
+      putWord16le . \case
+        W8 w -> fromIntegral w
+        W16 w -> w
+        IntOrChar w -> fromIntegral w
 
 firstPass :: [Statement] -> ProgramInfo
 firstPass ls = go ls 0 (ProgramInfo mempty mempty mempty)

@@ -5,7 +5,7 @@ import CmdOptions (Options (..), runCmdOptions)
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.IO qualified as T
-import Expr qualified
+import Parser qualified
 import Path
 
 main :: IO ()
@@ -15,7 +15,7 @@ main = do
   assemblyCode <- T.readFile sourceCodePath
   -- T.putStrLn assemblyCode
   -- T.putStrLn $ T.replicate 10 "-"
-  mayStatements <- Expr.mainLocal assemblyCode
+  mayStatements <- Parser.mainLocal assemblyCode
   case mayStatements of
     Nothing -> T.putStrLn "No results to be written"
     Just statements -> do

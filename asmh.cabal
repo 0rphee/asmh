@@ -52,6 +52,7 @@ library
   exposed-modules:
     Bin
     Expr
+    Parser
 
   build-depends:
     base >=4.7 && <5,

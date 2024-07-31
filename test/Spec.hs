@@ -15,8 +15,8 @@ import Bits.Show (showFiniteBits)
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Word
-import Expr
 import Numeric (showHex)
+import Parser
 import Test.Tasty
 import Test.Tasty.HUnit
 import Text.Megaparsec
@@ -51,7 +51,7 @@ tests =
     [ testGroup
         "Basic parsing tests"
         [ testGroup
-            "parseImmediate16"
+            "parseImmediate"
             [ testCaseNum Bin 0b1010_1010 parseImmediate8
             , testCaseNum Bin 0b1010_1010_1010_1010 parseImmediate16
             , testCaseNum Hex 0x2A parseImmediate8
