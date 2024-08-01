@@ -90,10 +90,10 @@ parseHex12 = parseHex 3
 parseHex16 :: Parser Word16
 parseHex16 = parseHex 4
 
-parseChar :: Parser Int
+parseChar :: Parser Char
 parseChar =
   label "character enclosed in <'>" $
-    ord <$> between "'" "'" anySingle
+    between "'" "'" anySingle
 
 parseDecimal :: Parser Int
 parseDecimal =
@@ -145,10 +145,10 @@ parseOperand =
     , label "immediate value" $
         ImmOp
           <$> choice
-            [ try $ IntOrChar <$> parseDecimal
-            , try $ W16 <$> parseImmediate16
-            , try $ W8 <$> parseImmediate8
-            , IntOrChar <$> parseChar
+            [ try $ RInt <$> parseDecimal
+            , try $ RW16 <$> parseImmediate16
+            , try $ RW8 <$> parseImmediate8
+            , RChar <$> parseChar
             ]
     , label "memory address" $ MemOp <$> parseMemory
     ]
@@ -225,18 +225,14 @@ sc = L.space space1 (L.skipLineComment ";") (L.skipBlockComment "/*" "*/")
 
 -- Main parser function
 parseAssembly
-  :: Text
-  -> Either
-      (ParseErrorBundle Text Void)
-      [Statement]
+  :: FilePath -> Text -> Either (ParseErrorBundle Text Void) [Statement]
 parseAssembly =
   parse
     (sc *> some parseStatement <* eof)
-    "myfile"
 
-mainLocal :: Text -> IO (Maybe [Statement])
-mainLocal assemblyCode = do
-  case parseAssembly assemblyCode of
+parseTestHelper :: Text -> IO (Maybe [Statement])
+parseTestHelper assemblyCode = do
+  case parseAssembly "test" assemblyCode of
     Left err -> do
       putStrLn "Error: "
       putStrLn $ errorBundlePretty err
@@ -247,6 +243,6 @@ mainLocal assemblyCode = do
 
 parseTest :: IO (Maybe [Statement])
 parseTest = do
-  mainLocal "mov ah, \"text3243242moremore\""
+  parseTestHelper "mov ah, \"text3243242moremore\""
 
 -- mainLocal "mov ah, 3243242moremore\""

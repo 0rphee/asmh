@@ -1,19 +1,18 @@
 {-# LANGUAGE OverloadedRecordDot #-}
 
-module Bin (writeBin) where
+module Bin (writeBin, compileStatements) where
 
 import Data.ByteString (ByteString)
 import Data.ByteString qualified as B
+import Data.Char (ord)
 import Data.Map (Map)
 import Data.Map qualified as M
 import Data.Serialize.Put
-import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.IO qualified as T
 import Data.Vector (Vector)
 import Data.Vector qualified as V
 import Data.Word
-import Debug.Trace
 import Expr
 import System.FilePath
 
@@ -89,46 +88,51 @@ trans labelMap instrLoc = \case
       Just v -> v
     putAsW8 :: RawValue -> Put =
       putWord8 . \case
-        W8 w -> w
-        W16 w -> fromIntegral w
-        IntOrChar w -> fromIntegral w
+        RW8 w -> w
+        RW16 w -> fromIntegral w
+        RInt w -> fromIntegral w
+        RChar w -> fromIntegral $ ord w
 
     putAsW16 :: RawValue -> Put =
       putWord16le . \case
-        W8 w -> fromIntegral w
-        W16 w -> w
-        IntOrChar w -> fromIntegral w
+        RW8 w -> fromIntegral w
+        RW16 w -> w
+        RInt w -> fromIntegral w
+        RChar w -> fromIntegral $ ord w
 
-firstPass :: [Statement] -> ProgramInfo
-firstPass ls = go ls 0 (ProgramInfo mempty mempty mempty)
+compileStatements :: [Statement] -> ByteString
+compileStatements = secondPass . firstPass
   where
-    go :: [Statement] -> Int -> ProgramInfo -> ProgramInfo
-    go [] _offset accum = accum
-    go (x : xs) offset acc = case x of
-      Ins newInstr ->
-        let newOffset = offset + getInstOffset newInstr
-         in go xs newOffset $ acc {instructions = V.snoc acc.instructions newInstr}
-      Dir newDir -> go xs offset $ acc {directives = V.snoc acc.directives newDir}
-      Lab newLabel ->
-        case xs of
-          (Ins _ : _) ->
-            let newInstrPos = offset
-             in go xs offset $ acc {labels = M.insert newLabel newInstrPos acc.labels}
-          _ -> error "there must be a label after an instruction"
+    firstPass :: [Statement] -> ProgramInfo
+    firstPass ls = go ls 0 (ProgramInfo mempty mempty mempty)
+      where
+        go :: [Statement] -> Int -> ProgramInfo -> ProgramInfo
+        go [] _offset accum = accum
+        go (x : xs) offset acc = case x of
+          Ins newInstr ->
+            let newOffset = offset + getInstOffset newInstr
+             in go xs newOffset $ acc {instructions = V.snoc acc.instructions newInstr}
+          Dir newDir -> go xs offset $ acc {directives = V.snoc acc.directives newDir}
+          Lab newLabel ->
+            case xs of
+              (Ins _ : _) ->
+                let newInstrPos = offset
+                 in go xs offset $ acc {labels = M.insert newLabel newInstrPos acc.labels}
+              _ -> error "there must be a label after an instruction"
 
-secondPass :: ProgramInfo -> ByteString
-secondPass = runPut . go 0
-  where
-    go offset p = case V.uncons p.instructions of
-      Just (nextInstruction, rest) -> do
-        let nextInstructionIndex = offset + getInstOffset nextInstruction
-        trans p.labels nextInstructionIndex nextInstruction
-        go nextInstructionIndex (p {instructions = rest})
-      Nothing -> pure ()
+    secondPass :: ProgramInfo -> ByteString
+    secondPass = runPut . go 0
+      where
+        go offset p = case V.uncons p.instructions of
+          Just (nextInstruction, rest) -> do
+            let nextInstructionIndex = offset + getInstOffset nextInstruction
+            trans p.labels nextInstructionIndex nextInstruction
+            go nextInstructionIndex (p {instructions = rest})
+          Nothing -> pure ()
 
 writeBin :: FilePath -> [Statement] -> IO ()
 writeBin originalFileName instr = do
   let newFileName = takeBaseName originalFileName <> ".com"
-  let binaryFile = secondPass $ firstPass instr
+  let binaryFile = compileStatements instr
   B.writeFile newFileName binaryFile
   T.putStrLn $ "Output written to " <> T.pack newFileName

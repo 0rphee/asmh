@@ -1,0 +1,245 @@
+EMU8086 GENERATED LISTING. MACHINE CODE <- SOURCE.
+ 
+mouse.com -- emu8086 assembler version: 4.08  
+ 
+[ 7/16/2024  --  10:20:08 AM ] 
+ 
+===================================================================================================
+[LINE]     LOC: MACHINE CODE                          SOURCE
+===================================================================================================
+ 
+[   1]        :                                       ; mouse test
+[   2]        :                                       
+[   3]        :                                       name "mouse"
+[   4]        :                                       
+[   5]        :                                       org 100h
+[   6]        :                                       
+[   7]        :                                       print macro x, y, attrib, sdat
+[   8]        :                                       LOCAL   s_dcl, skip_dcl, s_dcl_end
+[   9]        :                                       pusha
+[  10]        :                                       mov dx, cs
+[  11]        :                                       mov es, dx
+[  12]        :                                       mov ah, 13h
+[  13]        :                                       mov al, 1
+[  14]        :                                       mov bh, 0
+[  15]        :                                       mov bl, attrib
+[  16]        :                                       mov cx, offset s_dcl_end - offset s_dcl
+[  17]        :                                       mov dl, x
+[  18]        :                                       mov dh, y
+[  19]        :                                       mov bp, offset s_dcl
+[  20]        :                                       int 10h
+[  21]        :                                       popa
+[  22]        :                                       jmp skip_dcl
+[  23]        :                                       s_dcl DB sdat
+[  24]        :                                       s_dcl_end DB 0
+[  25]        :                                       skip_dcl:
+[  26]        :                                       endm
+[  27]        :                                       
+[  28]        :                                       clear_screen macro
+[  29]        :                                       pusha
+[  30]        :                                       mov ax, 0600h
+[  31]        :                                       mov bh, 0000_1111b
+[  32]        :                                       mov cx, 0
+[  33]        :                                       mov dh, 24
+[  34]        :                                       mov dl, 79
+[  35]        :                                       int 10h
+[  36]        :                                       popa
+[  37]        :                                       endm
+[  38]        :                                       
+[  39]        :                                       print_space macro num
+[  40]        :                                       pusha
+[  41]        :                                       mov ah, 9
+[  42]        :                                       mov al, ' '
+[  43]        :                                       mov bl, 0000_1111b
+[  44]        :                                       mov cx, num
+[  45]        :                                       int 10h
+[  46]        :                                       popa
+[  47]        :                                       endm
+[  48]        :                                       
+[  49]        :                                       
+[  50]    0100: EB 06                                 jmp start
+[  51]        :                                       
+[  52]    0102: 00 00                                 curX dw 0
+[  53]    0104: 00 00                                 curY dw 0
+[  54]    0106: 00 00                                 curB dw 0
+[  55]        :                                       
+[  56]        :                                       
+[  57]    0108:                                       start:
+[  58]    0108: B8 03 10                              mov ax, 1003h ; disable blinking.
+[  59]    010B: BB 00 00                              mov bx, 0
+[  60]    010E: CD 10                                 int 10h
+[  61]        :                                       
+[  62]        :                                       ; hide text cursor:
+[  63]    0110: B5 20                                 mov ch, 32
+[  64]    0112: B4 01                                 mov ah, 1
+[  65]    0114: CD 10                                 int 10h
+[  66]        :                                       
+[  67]        :                                       
+[  68]        :                                       ; reset mouse and get its status:
+[  69]    0116: B8 00 00                              mov ax, 0
+[  70]    0119: CD 33                                 int 33h
+[  71]    011B: 3D 00 00                              cmp ax, 0
+[  72]    011E: 75 35                                 jne ok
+[  73]    0120: 60 8C CA 8E C2 B4 13 B0 01 B7 00 B3   print 1,1,0010_1111b, " mouse not found :-( "
+                2F B9 15 00 B2 01 B6 01 BD 3C 01 CD 
+                10 61 EB 16 20 6D 6F 75 73 65 20 6E 
+                6F 74 20 66 6F 75 6E 64 20 3A 2D 28 
+                20 00                               
+[  74]    0152: E9 9D 02                              jmp stop
+[  75]        :                                       
+[  76]    0155:                                       ok:
+[  77]    0155: 60 B8 00 06 B7 0F B9 00 00 B6 18 B2   clear_screen
+                4F CD 10 61                         
+[  78]        :                                       
+[  79]    0165: 60 8C CA 8E C2 B4 13 B0 01 B7 00 B3   print 7,7,0010_1011b," note: in the emulator you may need to press and hold mouse buttons "
+                2B B9 44 00 B2 07 B6 07 BD 81 01 CD 
+                10 61 EB 45 20 6E 6F 74 65 3A 20 69 
+                6E 20 74 68 65 20 65 6D 75 6C 61 74 
+                6F 72 20 79 6F 75 20 6D 61 79 20 6E 
+                65 65 64 20 74 6F 20 70 72 65 73 73 
+                20 61 6E 64 20 68 6F 6C 64 20 6D 6F 
+                75 73 65 20 62 75 74 74 6F 6E 73 20 
+                00                                  
+[  80]    01C6: 60 8C CA 8E C2 B4 13 B0 01 B7 00 B3   print 7,8,0010_1011b," because mouse interrupts are not processed in real time.           "
+                2B B9 44 00 B2 07 B6 08 BD E2 01 CD 
+                10 61 EB 45 20 62 65 63 61 75 73 65 
+                20 6D 6F 75 73 65 20 69 6E 74 65 72 
+                72 75 70 74 73 20 61 72 65 20 6E 6F 
+                74 20 70 72 6F 63 65 73 73 65 64 20 
+                69 6E 20 72 65 61 6C 20 74 69 6D 65 
+                2E 20 20 20 20 20 20 20 20 20 20 20 
+                00                                  
+[  81]    0227: 60 8C CA 8E C2 B4 13 B0 01 B7 00 B3   print 7,9,0010_1011b," for a real test, click external->run from the menu.                "
+                2B B9 44 00 B2 07 B6 09 BD 43 02 CD 
+                10 61 EB 45 20 66 6F 72 20 61 20 72 
+                65 61 6C 20 74 65 73 74 2C 20 63 6C 
+                69 63 6B 20 65 78 74 65 72 6E 61 6C 
+                2D 3E 72 75 6E 20 66 72 6F 6D 20 74 
+                68 65 20 6D 65 6E 75 2E 20 20 20 20 
+                20 20 20 20 20 20 20 20 20 20 20 20 
+                00                                  
+[  82]    0288: 60 8C CA 8E C2 B4 13 B0 01 B7 00 B3   print 10,11,0010_1111b," click/hold both buttons to exit... "
+                2F B9 24 00 B2 0A B6 0B BD A4 02 CD 
+                10 61 EB 25 20 63 6C 69 63 6B 2F 68 
+                6F 6C 64 20 62 6F 74 68 20 62 75 74 
+                74 6F 6E 73 20 74 6F 20 65 78 69 74 
+                2E 2E 2E 20 00                      
+[  83]        :                                       
+[  84]        :                                       ; display mouse cursor:
+[  85]    02C9: B8 01 00                              mov ax, 1
+[  86]    02CC: CD 33                                 int 33h
+[  87]        :                                       
+[  88]    02CE:                                       check_mouse_buttons:
+[  89]    02CE: B8 03 00                              mov ax, 3
+[  90]    02D1: CD 33                                 int 33h
+[  91]    02D3: 83 FB 03                              cmp bx, 3  ; both buttons
+[  92]    02D6: 75 03 E9 B9 00                        je  hide
+[  93]    02DB: 3B 0E 02 01                           cmp cx, curX
+[  94]    02DF: 75 0C                                 jne print_xy
+[  95]    02E1: 3B 16 04 01                           cmp dx, curY
+[  96]    02E5: 75 06                                 jne print_xy
+[  97]    02E7: 3B 1E 06 01                           cmp bx, curB
+[  98]    02EB: 75 6D                                 jne print_buttons
+[  99]        :                                       
+[ 100]        :                                       
+[ 101]    02ED:                                       print_xy:
+[ 102]    02ED: 60 8C CA 8E C2 B4 13 B0 01 B7 00 B3   print 0,0,0000_1111b,"x="
+                0F B9 02 00 B2 00 B6 00 BD 09 03 CD 
+                10 61 EB 03 78 3D 00                
+[ 103]    030C: 8B C1                                 mov ax, cx
+[ 104]    030E: E8 1E 01                              call print_ax
+[ 105]    0311: 60 B4 09 B0 20 B3 0F B9 04 00 CD 10   print_space 4
+                61                                  
+[ 106]    031E: 60 8C CA 8E C2 B4 13 B0 01 B7 00 B3   print 0,1,0000_1111b,"y="
+                0F B9 02 00 B2 00 B6 01 BD 3A 03 CD 
+                10 61 EB 03 79 3D 00                
+[ 107]    033D: 8B C2                                 mov ax, dx
+[ 108]    033F: E8 ED 00                              call print_ax
+[ 109]    0342: 60 B4 09 B0 20 B3 0F B9 04 00 CD 10   print_space 4
+                61                                  
+[ 110]    034F: 89 0E 02 01                           mov curX, cx
+[ 111]    0353: 89 16 04 01                           mov curY, dx
+[ 112]    0357: E9 74 FF                              jmp check_mouse_buttons
+[ 113]        :                                       
+[ 114]    035A:                                       print_buttons:
+[ 115]    035A: 60 8C CA 8E C2 B4 13 B0 01 B7 00 B3   print 0,2,0000_1111b,"btn="
+                0F B9 04 00 B2 00 B6 02 BD 76 03 CD 
+                10 61 EB 05 62 74 6E 3D 00          
+[ 116]    037B: 8B C3                                 mov ax, bx
+[ 117]    037D: E8 AF 00                              call print_ax
+[ 118]    0380: 60 B4 09 B0 20 B3 0F B9 04 00 CD 10   print_space 4
+                61                                  
+[ 119]    038D: 89 1E 06 01                           mov curB, bx
+[ 120]    0391: E9 3A FF                              jmp check_mouse_buttons
+[ 121]        :                                       
+[ 122]        :                                       
+[ 123]        :                                       
+[ 124]    0394:                                       hide:
+[ 125]    0394: B8 02 00                              mov ax, 2  ; hide mouse cursor.
+[ 126]    0397: CD 33                                 int 33h
+[ 127]        :                                       
+[ 128]    0399: 60 B8 00 06 B7 0F B9 00 00 B6 18 B2   clear_screen
+                4F CD 10 61                         
+[ 129]        :                                       
+[ 130]    03A9: 60 8C CA 8E C2 B4 13 B0 01 B7 00 B3   print 1,1,1010_0000b," hardware must be free!      free the mice! "
+                A0 B9 2C 00 B2 01 B6 01 BD C5 03 CD 
+                10 61 EB 2D 20 68 61 72 64 77 61 72 
+                65 20 6D 75 73 74 20 62 65 20 66 72 
+                65 65 21 20 20 20 20 20 20 66 72 65 
+                65 20 74 68 65 20 6D 69 63 65 21 20 
+                00                                  
+[ 131]        :                                       
+[ 132]    03F2:                                       stop:
+[ 133]        :                                       ; show box-shaped blinking text cursor:
+[ 134]    03F2: B4 01                                 mov ah, 1
+[ 135]    03F4: B5 00                                 mov ch, 0
+[ 136]    03F6: B1 08                                 mov cl, 8
+[ 137]    03F8: CD 10                                 int 10h
+[ 138]        :                                       
+[ 139]    03FA: 60 8C CA 8E C2 B4 13 B0 01 B7 00 B3   print 4,7,0000_1010b," press any key.... "
+                0A B9 13 00 B2 04 B6 07 BD 16 04 CD 
+                10 61 EB 14 20 70 72 65 73 73 20 61 
+                6E 79 20 6B 65 79 2E 2E 2E 2E 20 00 
+                                                    
+[ 140]    042A: B4 00                                 mov ah, 0
+[ 141]    042C: CD 16                                 int 16h
+[ 142]        :                                       
+[ 143]    042E: C3                                    ret
+[ 144]        :                                       
+[ 145]        :                                       
+[ 146]    042F:                                       print_ax proc
+[ 147]    042F: 3D 00 00                              cmp ax, 0
+[ 148]    0432: 75 09                                 jne print_ax_r
+[ 149]    0434: 50                                    push ax
+[ 150]    0435: B0 30                                 mov al, '0'
+[ 151]    0437: B4 0E                                 mov ah, 0eh
+[ 152]    0439: CD 10                                 int 10h
+[ 153]    043B: 58                                    pop ax
+[ 154]    043C: C3                                    ret
+[ 155]    043D:                                       print_ax_r:
+[ 156]    043D: 60                                    pusha
+[ 157]    043E: BA 00 00                              mov dx, 0
+[ 158]    0441: 3D 00 00                              cmp ax, 0
+[ 159]    0444: 74 12                                 je pn_done
+[ 160]    0446: BB 0A 00                              mov bx, 10
+[ 161]    0449: F7 F3                                 div bx
+[ 162]    044B: E8 EF FF                              call print_ax_r
+[ 163]    044E: 8B C2                                 mov ax, dx
+[ 164]    0450: 04 30                                 add al, 30h
+[ 165]    0452: B4 0E                                 mov ah, 0eh
+[ 166]    0454: CD 10                                 int 10h
+[ 167]    0456: EB 00                                 jmp pn_done
+[ 168]    0458:                                       pn_done:
+[ 169]    0458: 61                                    popa
+[ 170]    0459: C3                                    ret
+[ 171]        :                                       endp
+[ 172]        :                                       
+[ 173]        :                                       
+ 
+===================================================================================================
+ 
+
+
+
+
+===================================================================================================

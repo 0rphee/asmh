@@ -1,0 +1,140 @@
+EMU8086 GENERATED LISTING. MACHINE CODE <- SOURCE.
+ 
+hex.com -- emu8086 assembler version: 4.08  
+ 
+[ 7/16/2024  --  10:19:23 AM ] 
+ 
+===================================================================================================
+[LINE]     LOC: MACHINE CODE                          SOURCE
+===================================================================================================
+ 
+[   1]        :                                       ; hex convertor.
+[   2]        :                                       ; this example converts a 2 digit hexadecimal number
+[   3]        :                                       ; into a numeric value and then into decimal/ascii string representation,
+[   4]        :                                       ; and finally it prints out the result in binary code.
+[   5]        :                                       
+[   6]        :                                       ; to see decimal string:
+[   7]        :                                       ;   1. click "vars"
+[   8]        :                                       ;   2. click "result" variable
+[   9]        :                                       ;   3. enter "3" for the elements and "ascii" for show as.
+[  10]        :                                       
+[  11]        :                                       
+[  12]        :                                       name "hex"
+[  13]        :                                       
+[  14]        :                                       org 100h
+[  15]        :                                       
+[  16]    0100: EB 09                                 jmp start
+[  17]        :                                       
+[  18]        :                                       ; source hex value is 2 char string.
+[  19]        :                                       ; numeric value is stored into temp,
+[  20]        :                                       ; and string decimal value is stored into result.
+[  21]        :                                       
+[  22]    0102: 31 62 00                              source db '1b', 0     ; 1bh is converted to 27 (decimal) 00011011b (binary)
+[  23]    0105: 30 30 30 00                           result db '000', 0
+[  24]    0109: 00 00                                 temp   dw ?
+[  25]        :                                       
+[  26]    010B:                                       start:
+[  27]        :                                       ; convert first digit to value 0..15 from ascii:
+[  28]    010B: A0 02 01                              mov al, source[0]
+[  29]    010E: 3C 30                                 cmp al, '0'
+[  30]    0110: 73 00                                 jae  f1
+[  31]        :                                       
+[  32]    0112:                                       f1:
+[  33]    0112: 3C 39                                 cmp al, '9'
+[  34]    0114: 77 04                                 ja f2     ; jumps only if not '0' to '9'.
+[  35]        :                                       
+[  36]    0116: 2C 30                                 sub al, 30h  ; convert char '0' to '9' to numeric value.
+[  37]    0118: EB 04                                 jmp num1_ready
+[  38]        :                                       
+[  39]    011A:                                       f2:
+[  40]        :                                       ; gets here if it's 'a' to 'f' case:
+[  41]    011A: 0C 20                                 or al, 00100000b   ; remove upper case (if any).
+[  42]    011C: 2C 57                                 sub al, 57h  ;  convert char 'a' to 'f' to numeric value.
+[  43]        :                                       
+[  44]    011E:                                       num1_ready:
+[  45]    011E: B3 10                                 mov bl, 16
+[  46]    0120: F6 E3                                 mul bl      ; ax = al * bl
+[  47]        :                                       
+[  48]    0122: A3 09 01                              mov temp, ax
+[  49]        :                                       
+[  50]        :                                       ; convert second digit to value 0..15 from ascii:
+[  51]    0125: A0 03 01                              mov al, source[1]
+[  52]    0128: 3C 30                                 cmp al, '0'
+[  53]    012A: 73 00                                 jae  g1
+[  54]        :                                       
+[  55]    012C:                                       g1:
+[  56]    012C: 3C 39                                 cmp al, '9'
+[  57]    012E: 77 04                                 ja g2     ; jumps only if not '0' to '9'.
+[  58]        :                                       
+[  59]    0130: 2C 30                                 sub al, 30h  ; convert char '0' to '9' to numeric value.
+[  60]    0132: EB 04                                 jmp num2_ready
+[  61]        :                                       
+[  62]    0134:                                       g2:
+[  63]        :                                       ; gets here if it's 'a' to 'f' case:
+[  64]    0134: 0C 20                                 or al, 00100000b   ; remove upper case (if any).
+[  65]    0136: 2C 57                                 sub al, 57h  ;  convert char 'a' to 'f' to numeric value.
+[  66]        :                                       
+[  67]    0138:                                       num2_ready:
+[  68]    0138: 32 E4                                 xor ah, ah
+[  69]    013A: 01 06 09 01                           add temp, ax
+[  70]        :                                       ; convertion from hex string complete!
+[  71]    013E: FF 36 09 01                           push temp ; store original temp value.
+[  72]        :                                       
+[  73]        :                                       ; convert to decimal string,
+[  74]        :                                       ; it has to be 3 decimal digits or less:
+[  75]        :                                       
+[  76]    0142: BF 02 00                              mov di, 2  ; point to top of the string.
+[  77]        :                                       
+[  78]    0145:                                       next_digit:
+[  79]        :                                       
+[  80]    0145: 83 3E 09 01 00                        cmp temp, 0
+[  81]    014A: 74 18                                 je stop
+[  82]        :                                       
+[  83]    014C: A1 09 01                              mov ax, temp
+[  84]    014F: B3 0A                                 mov bl, 10
+[  85]    0151: F6 F3                                 div bl ; al = ax / operand, ah = remainder.
+[  86]    0153: 88 A5 05 01                           mov result[di], ah
+[  87]    0157: 80 85 05 01 30                        add result[di], 30h ; convert to ascii.
+[  88]        :                                       
+[  89]    015C: 32 E4                                 xor ah, ah
+[  90]    015E: A3 09 01                              mov temp, ax
+[  91]        :                                       
+[  92]    0161: 4F                                    dec di  ; next digit in string.
+[  93]    0162: EB E1                                 jmp next_digit
+[  94]        :                                       
+[  95]    0164:                                       stop:
+[  96]    0164: 8F 06 09 01                           pop temp ; re-store original temp value.
+[  97]        :                                       
+[  98]        :                                       ; print result in binary:
+[  99]    0168: 8A 1E 09 01                           mov bl, b.temp
+[ 100]    016C: B9 08 00                              mov cx, 8
+[ 101]    016F: B4 02                                 print: mov ah, 2   ; print function.
+[ 102]    0171: B2 30                                 mov dl, '0'
+[ 103]    0173: F6 C3 80                              test bl, 10000000b  ; test first bit.
+[ 104]    0176: 74 02                                 jz zero
+[ 105]    0178: B2 31                                 mov dl, '1'
+[ 106]    017A: CD 21                                 zero:  int 21h
+[ 107]    017C: D0 E3                                 shl bl, 1
+[ 108]    017E: E2 EF                                 loop print
+[ 109]        :                                       
+[ 110]        :                                       ; print binary suffix:
+[ 111]    0180: B2 62                                 mov dl, 'b'
+[ 112]    0182: CD 21                                 int 21h
+[ 113]        :                                       
+[ 114]        :                                       ; wait for any key press:
+[ 115]    0184: B4 00                                 mov ah, 0
+[ 116]    0186: CD 16                                 int 16h
+[ 117]        :                                       
+[ 118]        :                                       
+[ 119]        :                                       
+[ 120]        :                                       
+[ 121]    0188: C3                                    ret  ; return to operating system.
+[ 122]        :                                       
+ 
+===================================================================================================
+ 
+
+
+
+
+===================================================================================================

@@ -1,0 +1,43 @@
+< THE SYMBOL TABLE >  calc.com  --  emu8086 assembler version: 4.08 
+===================================================================================================
+Name                     	Offset    	Size      	Type      	Segment   
+===================================================================================================
+MSG1                     	00102     	1         	VAR       	(NOSEG)   
+MSG2                     	00149     	1         	VAR       	(NOSEG)   
+MSG3                     	00161     	1         	VAR       	(NOSEG)   
+NUM                      	00170     	2         	VAR       	(NOSEG)   
+START                    	00172     	-1        	LABEL     	(NOSEG)   
+OVERFLOW                 	0019F     	-1        	LABEL     	(NOSEG)   
+S_DCL_LOC1TMP            	001A3     	1         	VAR       	(NOSEG)   
+SKIP_DCL_LOC1TMP         	001B7     	-1        	LABEL     	(NOSEG)   
+NEXT_CHAR_LOC1TMP        	001BA     	-1        	LABEL     	(NOSEG)   
+PRINTED_LOC1TMP          	001C8     	-1        	LABEL     	(NOSEG)   
+EXIT                     	001CA     	-1        	LABEL     	(NOSEG)   
+SCAN_NUM                 	001CF     	-1        	NEAR      	(NOSEG)   
+NEXT_DIGIT               	001DB     	-1        	LABEL     	(NOSEG)   
+NOT_CR                   	001EE     	-1        	LABEL     	(NOSEG)   
+BACKSPACE_CHECKED        	00210     	-1        	LABEL     	(NOSEG)   
+OK_AE_0                  	00216     	-1        	LABEL     	(NOSEG)   
+REMOVE_NOT_DIGIT         	0021A     	-1        	LABEL     	(NOSEG)   
+OK_DIGIT                 	00234     	-1        	LABEL     	(NOSEG)   
+SET_MINUS                	00250     	-1        	LABEL     	(NOSEG)   
+TOO_BIG2                 	00258     	-1        	LABEL     	(NOSEG)   
+TOO_BIG                  	0025D     	-1        	LABEL     	(NOSEG)   
+STOP_INPUT               	00281     	-1        	LABEL     	(NOSEG)   
+NOT_MINUS                	0028B     	-1        	LABEL     	(NOSEG)   
+MAKE_MINUS               	0028F     	1         	VAR       	(NOSEG)   
+PRINT_NUM                	00290     	-1        	NEAR      	(NOSEG)   
+NOT_ZERO                 	002A1     	-1        	LABEL     	(NOSEG)   
+POSITIVE                 	002B0     	-1        	LABEL     	(NOSEG)   
+PRINTED                  	002B3     	-1        	LABEL     	(NOSEG)   
+PRINT_NUM_UNS            	002B6     	-1        	NEAR      	(NOSEG)   
+BEGIN_PRINT              	002C5     	-1        	LABEL     	(NOSEG)   
+CALC                     	002D3     	-1        	LABEL     	(NOSEG)   
+SKIP                     	002E7     	-1        	LABEL     	(NOSEG)   
+PRINT_ZERO               	002F7     	-1        	LABEL     	(NOSEG)   
+END_PRINT                	002FF     	-1        	LABEL     	(NOSEG)   
+TEN                      	00304     	2         	VAR       	(NOSEG)   
+===================================================================================================
+[ 7/16/2024  --  10:18:01 AM ] 
+< END >
+ 

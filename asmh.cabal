@@ -33,7 +33,6 @@ common common-options
     -funbox-strict-fields
     -fexpose-all-unfoldings
     -threaded
-    -with-rtsopts=-N
     -Wunused-packages
 
   default-extensions:
@@ -64,11 +63,15 @@ library
     megaparsec,
     path,
     text,
+    text-display,
     vector,
 
 executable asmh
   import:
     common-options
+
+  ghc-options:
+    -with-rtsopts=-N
 
   hs-source-dirs:
     app
@@ -87,6 +90,7 @@ executable asmh
     cereal,
     filepath,
     githash,
+    megaparsec,
     optparse-applicative,
     path,
     text,
@@ -110,8 +114,11 @@ test-suite asmh-test
     base >=4.7 && <5,
     bits-show,
     bytestring,
+    filepath,
     megaparsec,
     tasty,
+    tasty-golden,
     tasty-hunit,
     tasty-quickcheck,
     text,
+    text-display,

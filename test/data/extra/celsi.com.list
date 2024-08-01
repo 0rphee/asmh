@@ -1,0 +1,107 @@
+EMU8086 GENERATED LISTING. MACHINE CODE <- SOURCE.
+ 
+celsi.com -- emu8086 assembler version: 4.08  
+ 
+[ 7/16/2024  --  10:19:04 AM ] 
+ 
+===================================================================================================
+[LINE]     LOC: MACHINE CODE                          SOURCE
+===================================================================================================
+ 
+[   1]        :                                       ; centigrade (celsius) to fahrenheit calculation and vice-versa.
+[   2]        :                                       ; it may not be accurate, because of integer division.
+[   3]        :                                       
+[   4]        :                                       ; this program prints out the result in binary code.
+[   5]        :                                       ; to see result in hexadecimal or decimal form click vars.
+[   6]        :                                       
+[   7]        :                                       name "celsi"
+[   8]        :                                       
+[   9]        :                                       org 100h
+[  10]        :                                       
+[  11]    0100: EB 04                                 jmp start
+[  12]        :                                       
+[  13]    0102: 0A                                    tc db 10    ; t celsius.
+[  14]    0103: 00                                    tf db 0     ; t fahrenheit.
+[  15]        :                                       
+[  16]    0104: 00                                    result1 db ?   ; result in fahrenheit.
+[  17]    0105: 00                                    result2 db ?   ; result in celsius.
+[  18]        :                                       
+[  19]    0106:                                       start:
+[  20]        :                                       
+[  21]        :                                       ; convert celsius to fahrenheit according
+[  22]        :                                       ; to this formula: f = c * 9 / 5 + 32
+[  23]        :                                       
+[  24]    0106: 8A 0E 02 01                           mov cl, tc
+[  25]    010A: B0 09                                 mov al, 9
+[  26]    010C: F6 E9                                 imul cl
+[  27]    010E: B1 05                                 mov cl, 5
+[  28]    0110: F6 F9                                 idiv cl
+[  29]    0112: 04 20                                 add al, 32
+[  30]    0114: A2 04 01                              mov result1, al
+[  31]        :                                       
+[  32]    0117: 8A 1E 04 01                           mov bl, result1
+[  33]    011B: E8 1E 00                              call print  ; print bl
+[  34]        :                                       
+[  35]        :                                       
+[  36]        :                                       ; convert fahrenheit to celsius according
+[  37]        :                                       ; to this formula: c = (f - 32) * 5 / 9
+[  38]        :                                       
+[  39]    011E: 8A 0E 03 01                           mov cl, tf
+[  40]    0122: 80 E9 20                              sub cl, 32
+[  41]    0125: B0 05                                 mov al, 5
+[  42]    0127: F6 E9                                 imul cl
+[  43]    0129: B1 09                                 mov cl, 9
+[  44]    012B: F6 F9                                 idiv cl
+[  45]    012D: A2 05 01                              mov result2, al
+[  46]        :                                       
+[  47]    0130: 8A 1E 05 01                           mov bl, result2
+[  48]    0134: E8 05 00                              call print  ; print bl
+[  49]        :                                       
+[  50]        :                                       ; wait for any key press...
+[  51]    0137: B4 00                                 mov ah, 0
+[  52]    0139: CD 16                                 int 16h
+[  53]        :                                       
+[  54]        :                                       
+[  55]    013B: C3                                    ret  ; return to the operating system.
+[  56]        :                                       
+[  57]        :                                       
+[  58]        :                                       ; procedure prints the binary value of bl
+[  59]    013C:                                       print proc near
+[  60]        :                                       
+[  61]    013C: 60                                    pusha
+[  62]        :                                       
+[  63]        :                                       ; print result in binary:
+[  64]    013D: B9 08 00                              mov cx, 8
+[  65]    0140: B4 02                                 p1:    mov ah, 2   ; print function.
+[  66]    0142: B2 30                                 mov dl, '0'
+[  67]    0144: F6 C3 80                              test bl, 10000000b  ; test first bit.
+[  68]    0147: 74 02                                 jz zero
+[  69]    0149: B2 31                                 mov dl, '1'
+[  70]    014B: CD 21                                 zero:  int 21h
+[  71]    014D: D0 E3                                 shl bl, 1
+[  72]    014F: E2 EF                                 loop p1
+[  73]        :                                       ; print binary suffix:
+[  74]    0151: B2 62                                 mov dl, 'b'
+[  75]    0153: CD 21                                 int 21h
+[  76]        :                                       ; print carrige return and new line:
+[  77]    0155: B2 0D                                 mov dl, 0Dh
+[  78]    0157: CD 21                                 int 21h
+[  79]    0159: B2 0A                                 mov dl, 0Ah
+[  80]    015B: CD 21                                 int 21h
+[  81]        :                                       
+[  82]    015D: 61                                    popa
+[  83]        :                                       
+[  84]    015E: C3                                    ret  ; return to the main program.
+[  85]        :                                       print endp
+[  86]        :                                       
+[  87]        :                                       
+[  88]        :                                       
+[  89]        :                                       
+ 
+===================================================================================================
+ 
+
+
+
+
+===================================================================================================

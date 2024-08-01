@@ -1,64 +1,49 @@
 {-# LANGUAGE BinaryLiterals #-}
 
-module Main where
+module Main (main) where
 
--- import Control.Monad.ST
--- import Data.ByteString.Char8 as B
--- import Data.Foldable as F
--- import Data.Vector as V
--- import Expr
--- import FlatParse.Stateful
--- import Parser qualified as P
--- import Scanner qualified as S
-
+import Bin (compileStatements)
 import Bits.Show (showFiniteBits)
-import Data.Text (Text)
+import Data.ByteString.Lazy (fromStrict)
 import Data.Text qualified as T
-import Data.Word
-import Numeric (showHex)
+import Data.Text.IO qualified as T
+import Expr
 import Parser
+import System.FilePath
+  ( replaceExtension
+  , takeBaseName
+  , takeDirectory
+  , takeFileName
+  , (</>)
+  )
 import Test.Tasty
+import Test.Tasty.Golden (findByExtension, goldenVsStringDiff)
 import Test.Tasty.HUnit
 import Text.Megaparsec
-import Text.Megaparsec.Char
-import Text.Megaparsec.Char.Lexer qualified as L
-
--- import Test.Tasty.QuickCheck
--- import Token
 
 data ImmediateLitType = Dec | Hex | Bin
 
-class ToHexString a where
-  toHexString :: a -> String
-
-instance ToHexString Word8 where
-  toHexString w = pad2 $ showHex w ""
-    where
-      pad2 s = replicate (2 - length s) '0' ++ s
-
-instance ToHexString Word16 where
-  toHexString w = pad4 $ showHex w ""
-    where
-      pad4 s = replicate (4 - length s) '0' ++ s
-
 main :: IO ()
-main = defaultMain tests
+main = defaultMain =<< tests
 
-tests :: TestTree
-tests =
-  testGroup
-    "Tests"
-    [ testGroup
-        "Basic parsing tests"
-        [ testGroup
-            "parseImmediate"
-            [ testCaseNum Bin 0b1010_1010 parseImmediate8
-            , testCaseNum Bin 0b1010_1010_1010_1010 parseImmediate16
-            , testCaseNum Hex 0x2A parseImmediate8
-            , testCaseNum Hex 0x0B01 parseImmediate16
-            ]
-        ]
-    ]
+tests :: IO TestTree
+tests = do
+  gd <- golden
+  pure $
+    testGroup
+      "Tests"
+      [ testGroup
+          "Basic parsing tests"
+          [ testGroup
+              "parseImmediate"
+              [ testCaseNum Bin 0b1010_1010 parseImmediate8
+              , testCaseNum Bin 0b1010_1010_1010_1010 parseImmediate16
+              , testCaseNum Hex 0x2A parseImmediate8
+              , testCaseNum Hex 0x0B01 parseImmediate16
+              ]
+          ]
+      , gd
+      ]
   where
     testCaseNum litType num parsingFunc = testCase ("parse " <> numStr <> " as " <> show num) $ do
       case parse parsingFunc "test" (T.pack numStr) of
@@ -69,6 +54,29 @@ tests =
           Dec -> show num
           Hex -> toHexString num <> "h"
           Bin -> showFiniteBits num <> "b"
+
+golden :: IO TestTree
+golden = do
+  asmFiles <- findByExtension [".asm"] "test/data/asm"
+  pure $
+    testGroup
+      "Golden tests"
+      [ goldenVsStringDiff
+        (takeBaseName asmFile)
+        (\reference new -> ["diff", reference, new])
+        comFile
+        ( do
+            res <- fmap compileStatements . parseAssembly asmFile <$> T.readFile asmFile
+            case res of
+              Left e -> error $ "Failed with parsing errors: \n" <> errorBundlePretty e
+              Right r -> pure $ fromStrict r
+        ) -- action whose result is tested
+      | asmFile <- asmFiles
+      , let comFile =
+              takeDirectory (takeDirectory asmFile)
+                </> "emu8086"
+                </> replaceExtension (takeFileName asmFile) ".bin"
+      ]
 
 -- success :: Assertion
 -- success = pure ()

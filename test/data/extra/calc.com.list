@@ -1,0 +1,388 @@
+EMU8086 GENERATED LISTING. MACHINE CODE <- SOURCE.
+ 
+calc.com -- emu8086 assembler version: 4.08  
+ 
+[ 7/16/2024  --  10:18:01 AM ] 
+ 
+===================================================================================================
+[LINE]     LOC: MACHINE CODE                          SOURCE
+===================================================================================================
+ 
+[   1]        :                                       ; this sample gets two numbers from the user,
+[   2]        :                                       ; then it calculates the sum of these numbers,
+[   3]        :                                       ; and prints it out.
+[   4]        :                                       
+[   5]        :                                       name "calc"
+[   6]        :                                       
+[   7]        :                                       ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+[   8]        :                                       ;;; these maros are copied from emu8086.inc ;;;
+[   9]        :                                       ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+[  10]        :                                       
+[  11]        :                                       ; this macro prints a string that is given as a parameter, example:
+[  12]        :                                       ; PRINTN 'hello world!'
+[  13]        :                                       ; the same as PRINT, but new line is automatically added.
+[  14]        :                                       PRINTN   MACRO   sdat
+[  15]        :                                       LOCAL   next_char, s_dcl, printed, skip_dcl
+[  16]        :                                       
+[  17]        :                                       PUSH    AX      ; store registers...
+[  18]        :                                       PUSH    SI      ;
+[  19]        :                                       
+[  20]        :                                       JMP     skip_dcl        ; skip declaration.
+[  21]        :                                       s_dcl DB sdat, 0Dh,0Ah, 0
+[  22]        :                                       
+[  23]        :                                       skip_dcl:
+[  24]        :                                       LEA     SI, s_dcl
+[  25]        :                                       
+[  26]        :                                       next_char:
+[  27]        :                                       MOV     AL, CS:[SI]
+[  28]        :                                       CMP     AL, 0
+[  29]        :                                       JZ      printed
+[  30]        :                                       INC     SI
+[  31]        :                                       MOV     AH, 0Eh ; teletype function.
+[  32]        :                                       INT     10h
+[  33]        :                                       JMP     next_char
+[  34]        :                                       printed:
+[  35]        :                                       
+[  36]        :                                       POP     SI      ; re-store registers...
+[  37]        :                                       POP     AX      ;
+[  38]        :                                       ENDM
+[  39]        :                                       
+[  40]        :                                       ; this macro prints a char in AL and advances
+[  41]        :                                       ; the current cursor position:
+[  42]        :                                       PUTC    MACRO   char
+[  43]        :                                       PUSH    AX
+[  44]        :                                       MOV     AL, char
+[  45]        :                                       MOV     AH, 0Eh
+[  46]        :                                       INT     10h
+[  47]        :                                       POP     AX
+[  48]        :                                       ENDM
+[  49]        :                                       ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+[  50]        :                                       
+[  51]        :                                       
+[  52]        :                                       
+[  53]        :                                       
+[  54]        :                                       org     100h
+[  55]        :                                       
+[  56]        :                                       
+[  57]        :                                       
+[  58]        :                                       
+[  59]        :                                       
+[  60]        :                                       
+[  61]        :                                       
+[  62]    0100: EB 70                                 jmp     start   ; skip data.
+[  63]        :                                       
+[  64]    0102: 0D 0A 69 6E 70 75 74 20 6E 75 6D 62   msg1  db 0Dh,0Ah, 'input numbers in this range: [-32768..32767]', 0Dh,0Ah
+                65 72 73 20 69 6E 20 74 68 69 73 20 
+                72 61 6E 67 65 3A 20 5B 2D 33 32 37 
+                36 38 2E 2E 33 32 37 36 37 5D 0D 0A 
+                                                    
+[  65]    0132: 0D 0A 65 6E 74 65 72 20 66 69 72 73   db 0Dh,0Ah, 'enter first number: $'
+                74 20 6E 75 6D 62 65 72 3A 20 24    
+[  66]        :                                       
+[  67]    0149: 0D 0A 65 6E 74 65 72 20 73 65 63 6F   msg2  db 0Dh,0Ah, 'enter second number: $'
+                6E 64 20 6E 75 6D 62 65 72 3A 20 24 
+                                                    
+[  68]        :                                       
+[  69]    0161: 0D 0A 74 68 65 20 73 75 6D 20 69 73   msg3  db 0Dh,0Ah, 'the sum is: $'
+                3A 20 24                            
+[  70]        :                                       
+[  71]        :                                       ; declaration of variable:
+[  72]    0170: 00 00                                 num  dw ?
+[  73]        :                                       
+[  74]    0172:                                       start:
+[  75]        :                                       
+[  76]        :                                       
+[  77]        :                                       ; print first message
+[  78]    0172: BA 02 01                              mov dx, offset msg1
+[  79]    0175: B4 09                                 mov ah, 9
+[  80]    0177: CD 21                                 int 21h
+[  81]        :                                       
+[  82]        :                                       
+[  83]    0179: E8 53 00                              call    scan_num
+[  84]        :                                       
+[  85]        :                                       ; keep first number:
+[  86]    017C: 89 0E 70 01                           mov     num, cx
+[  87]        :                                       
+[  88]        :                                       
+[  89]        :                                       ; print second message
+[  90]    0180: BA 49 01                              mov dx, offset msg2
+[  91]    0183: B4 09                                 mov ah, 9
+[  92]    0185: CD 21                                 int 21h
+[  93]        :                                       
+[  94]        :                                       
+[  95]    0187: E8 45 00                              call    scan_num
+[  96]        :                                       
+[  97]        :                                       
+[  98]        :                                       ; add numbers:
+[  99]    018A: 01 0E 70 01                           add     num, cx
+[ 100]    018E: 70 0F                                 jo      overflow
+[ 101]        :                                       
+[ 102]        :                                       
+[ 103]        :                                       ; print the result:
+[ 104]    0190: BA 61 01                              mov dx, offset msg3
+[ 105]    0193: B4 09                                 mov ah, 9
+[ 106]    0195: CD 21                                 int 21h
+[ 107]        :                                       
+[ 108]        :                                       
+[ 109]    0197: A1 70 01                              mov     ax, num
+[ 110]    019A: E8 F3 00                              call    print_num
+[ 111]        :                                       
+[ 112]    019D: EB 2B                                 jmp     exit
+[ 113]        :                                       
+[ 114]        :                                       ; process overlow error:
+[ 115]    019F:                                       overflow:
+[ 116]        :                                       
+[ 117]    019F: 50 56 EB 14 77 65 20 68 61 76 65 20   printn 'we have overflow!'
+                6F 76 65 72 66 6C 6F 77 21 0D 0A 00 
+                BE A3 01 2E 8A 04 3C 00 74 07 46 B4 
+                0E CD 10 EB F2 5E 58                
+[ 118]        :                                       
+[ 119]        :                                       
+[ 120]    01CA:                                       exit:
+[ 121]        :                                       
+[ 122]        :                                       ; wait for any key press:
+[ 123]    01CA: B4 00                                 mov ah, 0
+[ 124]    01CC: CD 16                                 int 16h
+[ 125]        :                                       
+[ 126]    01CE: C3                                    ret   ; return control to operating system.
+[ 127]        :                                       
+[ 128]        :                                       
+[ 129]        :                                       
+[ 130]        :                                       
+[ 131]        :                                       
+[ 132]        :                                       
+[ 133]        :                                       ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+[ 134]        :                                       ;;; these functions are copied from emu8086.inc ;;;
+[ 135]        :                                       ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+[ 136]        :                                       
+[ 137]        :                                       
+[ 138]        :                                       ; gets the multi-digit SIGNED number from the keyboard,
+[ 139]        :                                       ; and stores the result in CX register:
+[ 140]    01CF:                                       SCAN_NUM        PROC    NEAR
+[ 141]    01CF: 52                                    PUSH    DX
+[ 142]    01D0: 50                                    PUSH    AX
+[ 143]    01D1: 56                                    PUSH    SI
+[ 144]        :                                       
+[ 145]    01D2: B9 00 00                              MOV     CX, 0
+[ 146]        :                                       
+[ 147]        :                                       ; reset flag:
+[ 148]    01D5: 2E C6 06 8F 02 00                     MOV     CS:make_minus, 0
+[ 149]        :                                       
+[ 150]    01DB:                                       next_digit:
+[ 151]        :                                       
+[ 152]        :                                       ; get char from keyboard
+[ 153]        :                                       ; into AL:
+[ 154]    01DB: B4 00                                 MOV     AH, 00h
+[ 155]    01DD: CD 16                                 INT     16h
+[ 156]        :                                       ; and print it:
+[ 157]    01DF: B4 0E                                 MOV     AH, 0Eh
+[ 158]    01E1: CD 10                                 INT     10h
+[ 159]        :                                       
+[ 160]        :                                       ; check for MINUS:
+[ 161]    01E3: 3C 2D                                 CMP     AL, '-'
+[ 162]    01E5: 74 69                                 JE      set_minus
+[ 163]        :                                       
+[ 164]        :                                       ; check for ENTER key:
+[ 165]    01E7: 3C 0D                                 CMP     AL, 0Dh  ; carriage return?
+[ 166]    01E9: 75 03                                 JNE     not_cr
+[ 167]    01EB: E9 93 00                              JMP     stop_input
+[ 168]    01EE:                                       not_cr:
+[ 169]        :                                       
+[ 170]        :                                       
+[ 171]    01EE: 3C 08                                 CMP     AL, 8                   ; 'BACKSPACE' pressed?
+[ 172]    01F0: 75 1E                                 JNE     backspace_checked
+[ 173]    01F2: BA 00 00                              MOV     DX, 0                   ; remove last digit by
+[ 174]    01F5: 8B C1                                 MOV     AX, CX                  ; division:
+[ 175]    01F7: 2E F7 36 04 03                        DIV     CS:ten                  ; AX = DX:AX / 10 (DX-rem).
+[ 176]    01FC: 8B C8                                 MOV     CX, AX
+[ 177]    01FE: 50 B0 20 B4 0E CD 10 58               PUTC    ' '                     ; clear position.
+[ 178]    0206: 50 B0 08 B4 0E CD 10 58               PUTC    8                       ; backspace again.
+[ 179]    020E: EB CB                                 JMP     next_digit
+[ 180]    0210:                                       backspace_checked:
+[ 181]        :                                       
+[ 182]        :                                       
+[ 183]        :                                       ; allow only digits:
+[ 184]    0210: 3C 30                                 CMP     AL, '0'
+[ 185]    0212: 73 02                                 JAE     ok_AE_0
+[ 186]    0214: EB 04                                 JMP     remove_not_digit
+[ 187]    0216:                                       ok_AE_0:
+[ 188]    0216: 3C 39                                 CMP     AL, '9'
+[ 189]    0218: 76 1A                                 JBE     ok_digit
+[ 190]    021A:                                       remove_not_digit:
+[ 191]    021A: 50 B0 08 B4 0E CD 10 58               PUTC    8       ; backspace.
+[ 192]    0222: 50 B0 20 B4 0E CD 10 58               PUTC    ' '     ; clear last entered not digit.
+[ 193]    022A: 50 B0 08 B4 0E CD 10 58               PUTC    8       ; backspace again.
+[ 194]    0232: EB A7                                 JMP     next_digit ; wait for next input.
+[ 195]    0234:                                       ok_digit:
+[ 196]        :                                       
+[ 197]        :                                       
+[ 198]        :                                       ; multiply CX by 10 (first time the result is zero)
+[ 199]    0234: 50                                    PUSH    AX
+[ 200]    0235: 8B C1                                 MOV     AX, CX
+[ 201]    0237: 2E F7 26 04 03                        MUL     CS:ten                  ; DX:AX = AX*10
+[ 202]    023C: 8B C8                                 MOV     CX, AX
+[ 203]    023E: 58                                    POP     AX
+[ 204]        :                                       
+[ 205]        :                                       ; check if the number is too big
+[ 206]        :                                       ; (result should be 16 bits)
+[ 207]    023F: 83 FA 00                              CMP     DX, 0
+[ 208]    0242: 75 19                                 JNE     too_big
+[ 209]        :                                       
+[ 210]        :                                       ; convert from ASCII code:
+[ 211]    0244: 2C 30                                 SUB     AL, 30h
+[ 212]        :                                       
+[ 213]        :                                       ; add AL to CX:
+[ 214]    0246: B4 00                                 MOV     AH, 0
+[ 215]    0248: 8B D1                                 MOV     DX, CX      ; backup, in case the result will be too big.
+[ 216]    024A: 03 C8                                 ADD     CX, AX
+[ 217]    024C: 72 0A                                 JC      too_big2    ; jump if the number is too big.
+[ 218]        :                                       
+[ 219]    024E: EB 8B                                 JMP     next_digit
+[ 220]        :                                       
+[ 221]    0250:                                       set_minus:
+[ 222]    0250: 2E C6 06 8F 02 01                     MOV     CS:make_minus, 1
+[ 223]    0256: EB 83                                 JMP     next_digit
+[ 224]        :                                       
+[ 225]    0258:                                       too_big2:
+[ 226]    0258: 8B CA                                 MOV     CX, DX      ; restore the backuped value before add.
+[ 227]    025A: BA 00 00                              MOV     DX, 0       ; DX was zero before backup!
+[ 228]    025D:                                       too_big:
+[ 229]    025D: 8B C1                                 MOV     AX, CX
+[ 230]    025F: 2E F7 36 04 03                        DIV     CS:ten  ; reverse last DX:AX = AX*10, make AX = DX:AX / 10
+[ 231]    0264: 8B C8                                 MOV     CX, AX
+[ 232]    0266: 50 B0 08 B4 0E CD 10 58               PUTC    8       ; backspace.
+[ 233]    026E: 50 B0 20 B4 0E CD 10 58               PUTC    ' '     ; clear last entered digit.
+[ 234]    0276: 50 B0 08 B4 0E CD 10 58               PUTC    8       ; backspace again.
+[ 235]    027E: E9 5A FF                              JMP     next_digit ; wait for Enter/Backspace.
+[ 236]        :                                       
+[ 237]        :                                       
+[ 238]    0281:                                       stop_input:
+[ 239]        :                                       ; check flag:
+[ 240]    0281: 2E 80 3E 8F 02 00                     CMP     CS:make_minus, 0
+[ 241]    0287: 74 02                                 JE      not_minus
+[ 242]    0289: F7 D9                                 NEG     CX
+[ 243]    028B:                                       not_minus:
+[ 244]        :                                       
+[ 245]    028B: 5E                                    POP     SI
+[ 246]    028C: 58                                    POP     AX
+[ 247]    028D: 5A                                    POP     DX
+[ 248]    028E: C3                                    RET
+[ 249]    028F: 00                                    make_minus      DB      ?       ; used as a flag.
+[ 250]        :                                       SCAN_NUM        ENDP
+[ 251]        :                                       
+[ 252]        :                                       
+[ 253]        :                                       
+[ 254]        :                                       
+[ 255]        :                                       
+[ 256]        :                                       ; this procedure prints number in AX,
+[ 257]        :                                       ; used with PRINT_NUM_UNS to print signed numbers:
+[ 258]    0290:                                       PRINT_NUM       PROC    NEAR
+[ 259]    0290: 52                                    PUSH    DX
+[ 260]    0291: 50                                    PUSH    AX
+[ 261]        :                                       
+[ 262]    0292: 3D 00 00                              CMP     AX, 0
+[ 263]    0295: 75 0A                                 JNZ     not_zero
+[ 264]        :                                       
+[ 265]    0297: 50 B0 30 B4 0E CD 10 58               PUTC    '0'
+[ 266]    029F: EB 12                                 JMP     printed
+[ 267]        :                                       
+[ 268]    02A1:                                       not_zero:
+[ 269]        :                                       ; the check SIGN of AX,
+[ 270]        :                                       ; make absolute if it's negative:
+[ 271]    02A1: 3D 00 00                              CMP     AX, 0
+[ 272]    02A4: 79 0A                                 JNS     positive
+[ 273]    02A6: F7 D8                                 NEG     AX
+[ 274]        :                                       
+[ 275]    02A8: 50 B0 2D B4 0E CD 10 58               PUTC    '-'
+[ 276]        :                                       
+[ 277]    02B0:                                       positive:
+[ 278]    02B0: E8 03 00                              CALL    PRINT_NUM_UNS
+[ 279]    02B3:                                       printed:
+[ 280]    02B3: 58                                    POP     AX
+[ 281]    02B4: 5A                                    POP     DX
+[ 282]    02B5: C3                                    RET
+[ 283]        :                                       PRINT_NUM       ENDP
+[ 284]        :                                       
+[ 285]        :                                       
+[ 286]        :                                       
+[ 287]        :                                       ; this procedure prints out an unsigned
+[ 288]        :                                       ; number in AX (not just a single digit)
+[ 289]        :                                       ; allowed values are from 0 to 65535 (FFFF)
+[ 290]    02B6:                                       PRINT_NUM_UNS   PROC    NEAR
+[ 291]    02B6: 50                                    PUSH    AX
+[ 292]    02B7: 53                                    PUSH    BX
+[ 293]    02B8: 51                                    PUSH    CX
+[ 294]    02B9: 52                                    PUSH    DX
+[ 295]        :                                       
+[ 296]        :                                       ; flag to prevent printing zeros before number:
+[ 297]    02BA: B9 01 00                              MOV     CX, 1
+[ 298]        :                                       
+[ 299]        :                                       ; (result of "/ 10000" is always less or equal to 9).
+[ 300]    02BD: BB 10 27                              MOV     BX, 10000       ; 2710h - divider.
+[ 301]        :                                       
+[ 302]        :                                       ; AX is zero?
+[ 303]    02C0: 3D 00 00                              CMP     AX, 0
+[ 304]    02C3: 74 32                                 JZ      print_zero
+[ 305]        :                                       
+[ 306]    02C5:                                       begin_print:
+[ 307]        :                                       
+[ 308]        :                                       ; check divider (if zero go to end_print):
+[ 309]    02C5: 83 FB 00                              CMP     BX,0
+[ 310]    02C8: 74 35                                 JZ      end_print
+[ 311]        :                                       
+[ 312]        :                                       ; avoid printing zeros before number:
+[ 313]    02CA: 83 F9 00                              CMP     CX, 0
+[ 314]    02CD: 74 04                                 JE      calc
+[ 315]        :                                       ; if AX<BX then result of DIV will be zero:
+[ 316]    02CF: 3B C3                                 CMP     AX, BX
+[ 317]    02D1: 72 14                                 JB      skip
+[ 318]    02D3:                                       calc:
+[ 319]    02D3: B9 00 00                              MOV     CX, 0   ; set flag.
+[ 320]        :                                       
+[ 321]    02D6: BA 00 00                              MOV     DX, 0
+[ 322]    02D9: F7 F3                                 DIV     BX      ; AX = DX:AX / BX   (DX=remainder).
+[ 323]        :                                       
+[ 324]        :                                       ; print last digit
+[ 325]        :                                       ; AH is always ZERO, so it's ignored
+[ 326]    02DB: 04 30                                 ADD     AL, 30h    ; convert to ASCII code.
+[ 327]    02DD: 50 8A C0 B4 0E CD 10 58               PUTC    AL
+[ 328]        :                                       
+[ 329]        :                                       
+[ 330]    02E5: 8B C2                                 MOV     AX, DX  ; get remainder from last div.
+[ 331]        :                                       
+[ 332]    02E7:                                       skip:
+[ 333]        :                                       ; calculate BX=BX/10
+[ 334]    02E7: 50                                    PUSH    AX
+[ 335]    02E8: BA 00 00                              MOV     DX, 0
+[ 336]    02EB: 8B C3                                 MOV     AX, BX
+[ 337]    02ED: 2E F7 36 04 03                        DIV     CS:ten  ; AX = DX:AX / 10   (DX=remainder).
+[ 338]    02F2: 8B D8                                 MOV     BX, AX
+[ 339]    02F4: 58                                    POP     AX
+[ 340]        :                                       
+[ 341]    02F5: EB CE                                 JMP     begin_print
+[ 342]        :                                       
+[ 343]    02F7:                                       print_zero:
+[ 344]    02F7: 50 B0 30 B4 0E CD 10 58               PUTC    '0'
+[ 345]        :                                       
+[ 346]    02FF:                                       end_print:
+[ 347]        :                                       
+[ 348]    02FF: 5A                                    POP     DX
+[ 349]    0300: 59                                    POP     CX
+[ 350]    0301: 5B                                    POP     BX
+[ 351]    0302: 58                                    POP     AX
+[ 352]    0303: C3                                    RET
+[ 353]        :                                       PRINT_NUM_UNS   ENDP
+[ 354]        :                                       
+[ 355]        :                                       
+[ 356]        :                                       
+[ 357]    0304: 0A 00                                 ten             DW      10      ; used as multiplier/divider by SCAN_NUM & PRINT_NUM_UNS.
+[ 358]        :                                       
+[ 359]        :                                       
+ 
+===================================================================================================
+ 
+
+
+
+
+===================================================================================================

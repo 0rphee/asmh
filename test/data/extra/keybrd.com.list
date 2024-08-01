@@ -1,0 +1,87 @@
+EMU8086 GENERATED LISTING. MACHINE CODE <- SOURCE.
+ 
+keybrd.com -- emu8086 assembler version: 4.08  
+ 
+[ 7/16/2024  --  10:19:37 AM ] 
+ 
+===================================================================================================
+[LINE]     LOC: MACHINE CODE                          SOURCE
+===================================================================================================
+ 
+[   1]        :                                       ; this sample shows the use of keyboard functions.
+[   2]        :                                       ; try typing something into emulator screen.
+[   3]        :                                       ;
+[   4]        :                                       ; keyboard buffer is used, when someone types too fast.
+[   5]        :                                       ;
+[   6]        :                                       ; for realistic emulation, run this example at maximum speed
+[   7]        :                                       ;
+[   8]        :                                       ; this code will loop until you press esc key,
+[   9]        :                                       ; all other keys will be printed.
+[  10]        :                                       
+[  11]        :                                       name "keybrd"
+[  12]        :                                       
+[  13]        :                                       org     100h
+[  14]        :                                       
+[  15]        :                                       ; print a welcome message:
+[  16]    0100: BA 1C 01                              mov dx, offset msg
+[  17]    0103: B4 09                                 mov ah, 9
+[  18]    0105: CD 21                                 int 21h
+[  19]        :                                       
+[  20]        :                                       ;============================
+[  21]        :                                       ; eternal loop to get
+[  22]        :                                       ; and print keys:
+[  23]        :                                       
+[  24]    0107:                                       wait_for_key:
+[  25]        :                                       
+[  26]        :                                       ; check for keystroke in
+[  27]        :                                       ; keyboard buffer:
+[  28]    0107: B4 01                                 mov     ah, 1
+[  29]    0109: CD 16                                 int     16h
+[  30]    010B: 74 FA                                 jz      wait_for_key
+[  31]        :                                       
+[  32]        :                                       ; get keystroke from keyboard:
+[  33]        :                                       ; (remove from the buffer)
+[  34]    010D: B4 00                                 mov     ah, 0
+[  35]    010F: CD 16                                 int     16h
+[  36]        :                                       
+[  37]        :                                       ; print the key:
+[  38]    0111: B4 0E                                 mov     ah, 0eh
+[  39]    0113: CD 10                                 int     10h
+[  40]        :                                       
+[  41]        :                                       ; press 'esc' to exit:
+[  42]    0115: 3C 1B                                 cmp     al, 1bh
+[  43]    0117: 74 02                                 jz      exit
+[  44]        :                                       
+[  45]    0119: EB EC                                 jmp     wait_for_key
+[  46]        :                                       ;============================
+[  47]        :                                       
+[  48]    011B:                                       exit:
+[  49]    011B: C3                                    ret
+[  50]        :                                       
+[  51]    011C: 54 79 70 65 20 61 6E 79 74 68 69 6E   msg  db "Type anything...", 0Dh,0Ah
+                67 2E 2E 2E 0D 0A                   
+[  52]    012E: 5B 45 6E 74 65 72 5D 20 2D 20 63 61   db "[Enter] - carriage return.", 0Dh,0Ah
+                72 72 69 61 67 65 20 72 65 74 75 72 
+                6E 2E 0D 0A                         
+[  53]    014A: 5B 43 74 72 6C 5D 2B 5B 45 6E 74 65   db "[Ctrl]+[Enter] - line feed.", 0Dh,0Ah
+                72 5D 20 2D 20 6C 69 6E 65 20 66 65 
+                65 64 2E 0D 0A                      
+[  54]    0167: 59 6F 75 20 6D 61 79 20 68 65 61 72   db "You may hear a beep", 0Dh,0Ah
+                20 61 20 62 65 65 70 0D 0A          
+[  55]    017C: 20 20 20 20 77 68 65 6E 20 62 75 66   db "    when buffer is overflown.", 0Dh,0Ah
+                66 65 72 20 69 73 20 6F 76 65 72 66 
+                6C 6F 77 6E 2E 0D 0A                
+[  56]    019B: 50 72 65 73 73 20 45 73 63 20 74 6F   db "Press Esc to exit.", 0Dh,0Ah, "$"
+                20 65 78 69 74 2E 0D 0A 24          
+[  57]        :                                       
+[  58]        :                                       end
+[  59]        :                                       
+[  60]        :                                       
+ 
+===================================================================================================
+ 
+
+
+
+
+===================================================================================================

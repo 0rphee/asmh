@@ -1,0 +1,22 @@
+< THE SYMBOL TABLE >  hex.com  --  emu8086 assembler version: 4.08 
+===================================================================================================
+Name                     	Offset    	Size      	Type      	Segment   
+===================================================================================================
+SOURCE                   	00102     	1         	VAR       	(NOSEG)   
+RESULT                   	00105     	1         	VAR       	(NOSEG)   
+TEMP                     	00109     	2         	VAR       	(NOSEG)   
+START                    	0010B     	-1        	LABEL     	(NOSEG)   
+F1                       	00112     	-1        	LABEL     	(NOSEG)   
+F2                       	0011A     	-1        	LABEL     	(NOSEG)   
+NUM1_READY               	0011E     	-1        	LABEL     	(NOSEG)   
+G1                       	0012C     	-1        	LABEL     	(NOSEG)   
+G2                       	00134     	-1        	LABEL     	(NOSEG)   
+NUM2_READY               	00138     	-1        	LABEL     	(NOSEG)   
+NEXT_DIGIT               	00145     	-1        	LABEL     	(NOSEG)   
+STOP                     	00164     	-1        	LABEL     	(NOSEG)   
+PRINT                    	0016F     	-1        	LABEL     	(NOSEG)   
+ZERO                     	0017A     	-1        	LABEL     	(NOSEG)   
+===================================================================================================
+[ 7/16/2024  --  10:19:23 AM ] 
+< END >
+ 

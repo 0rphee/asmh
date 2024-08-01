@@ -6,17 +6,13 @@ import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.IO qualified as T
 import Parser qualified
-import Path
+import Text.Megaparsec.Error (errorBundlePretty)
 
 main :: IO ()
 main = do
   (Options sourceCodePath) <- runCmdOptions
   putStrLn $ "FILEPATH: " <> sourceCodePath
   assemblyCode <- T.readFile sourceCodePath
-  -- T.putStrLn assemblyCode
-  -- T.putStrLn $ T.replicate 10 "-"
-  mayStatements <- Parser.mainLocal assemblyCode
-  case mayStatements of
-    Nothing -> T.putStrLn "No results to be written"
-    Just statements -> do
-      writeBin sourceCodePath statements
+  case Parser.parseAssembly sourceCodePath assemblyCode of
+    Left e -> putStrLn $ errorBundlePretty e
+    Right statements -> writeBin sourceCodePath statements
