@@ -1,14 +1,16 @@
+{-# LANGUAGE LiberalTypeSynonyms #-}
+
 module Parser where
 
 import Control.Applicative hiding (many, some)
 import Control.Monad
 import Data.Char
+import Data.Int
 import Data.List.NonEmpty qualified as N
 import Data.Set qualified as S
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Void (Void)
-import Data.Word
 import Expr
 import Text.Megaparsec
 import Text.Megaparsec.Char
@@ -18,117 +20,84 @@ import Prelude hiding (take)
 type Parser = Parsec Void Text
 
 -- Parser for registers
-parseRegister :: Parser Register
+parseRegister :: Parser (SomeSized Register)
 parseRegister =
-  choice
-    [ AX <$ string' "AX"
-    , BX <$ string' "BX"
-    , CX <$ string' "CX"
-    , DX <$ string' "DX"
-    , SI <$ string' "SI"
-    , DI <$ string' "DI"
-    , BP <$ string' "BP"
-    , SP <$ string' "SP"
-    , AL <$ string' "AL"
-    , BL <$ string' "BL"
-    , CL <$ string' "CL"
-    , DL <$ string' "DL"
-    , AH <$ string' "AH"
-    , BH <$ string' "BH"
-    , CH <$ string' "CH"
-    , DH <$ string' "DH"
-    ]
+  label "register" $
+    choice
+      [ SZ16 AX <$ string' "AX"
+      , SZ16 BX <$ string' "BX"
+      , SZ16 CX <$ string' "CX"
+      , SZ16 DX <$ string' "DX"
+      , SZ16 SI <$ string' "SI"
+      , SZ16 DI <$ string' "DI"
+      , SZ16 BP <$ string' "BP"
+      , SZ16 SP <$ string' "SP"
+      , SZ8 AL <$ string' "AL"
+      , SZ8 BL <$ string' "BL"
+      , SZ8 CL <$ string' "CL"
+      , SZ8 DL <$ string' "DL"
+      , SZ8 AH <$ string' "AH"
+      , SZ8 BH <$ string' "BH"
+      , SZ8 CH <$ string' "CH"
+      , SZ8 DH <$ string' "DH"
+      ]
 
-parseNum :: Parser b -> Parser a -> Int -> String -> Parser b
-parseNum lexer ending numberOfDigits lstr = label lstr $ do
+parseNum :: Num b => Parser b -> Parser a -> String -> Parser b
+parseNum lexer ending lstr = label lstr $ L.signed hspace $ do
   o <- getOffset
   region (\_ -> TrivialError o Nothing $ S.singleton $ Label $ N.fromList lstr) $ do
-    (toks, val) <- match lexer
-    guard (T.length toks == numberOfDigits)
+    val <- lexer
     ending
     pure val
 
-parseBin :: Num b => Int -> Parser b
-parseBin ndigits = parseNum L.binary (char 'b') ndigits lstr
-  where
-    lstr =
-      concat
-        [ "binary number of "
-        , show ndigits
-        , " digits ["
-        , show $ ndigits `div` 8
-        , " byte(s)]"
-        ]
+parseBin :: Parser Int
+parseBin = parseNum L.binary (char 'b') "binary number"
 
-parseBin8 :: Parser Word8
-parseBin8 = parseBin 8
+parseHex :: Parser Int
+parseHex = parseNum L.hexadecimal (char 'h') "hexadecimal number"
 
-parseBin12 :: Parser Word16
-parseBin12 = parseBin 12
-
-parseBin16 :: Parser Word16
-parseBin16 = parseBin 16
-
-parseHex :: Num b => Int -> Parser b
-parseHex ndigits = parseNum L.hexadecimal (char 'h') ndigits lstr
-  where
-    lstr =
-      concat
-        [ "hexadecimal number of "
-        , show ndigits
-        , " digits ["
-        , show $ ndigits `div` 2
-        , " bytes(s)]"
-        ]
-
-parseHex8 :: Parser Word8
-parseHex8 = parseHex 2
-
-parseHex12 :: Parser Word16
-parseHex12 = parseHex 3
-
-parseHex16 :: Parser Word16
-parseHex16 = parseHex 4
-
-parseChar :: Parser Char
+parseChar :: Parser Int
 parseChar =
   label "character enclosed in <'>" $
-    between "'" "'" anySingle
+    ord <$> between "'" "'" anySingle
 
 parseDecimal :: Parser Int
 parseDecimal =
   label "decimal number" $
-    L.lexeme space $
-      hidden L.decimal <* lookAhead (label "no postfix for number" spaceChar)
+    L.lexeme hspace $
+      L.signed
+        hspace
+        (L.decimal <* lookAhead (label "no postfix for number" spaceChar))
 
--- Parser for immediate values
-parseImmediate8 :: Parser Word8
-parseImmediate8 =
-  label "8bit number" $
-    choice
-      [ try parseBin8
-      , parseHex8
-      ]
+parseImmediate :: Parser (SomeSized RawValue)
+parseImmediate =
+  label
+    "immediate value"
+    ( SZS . RWS
+        <$> choice
+          [ try parseHex
+          , try parseBin
+          , try parseChar
+          , parseDecimal
+          ]
+    )
 
-parseImmediate12 :: Parser Word16
-parseImmediate12 =
-  label "12bit number" $
-    choice
-      [ try parseBin12
-      , parseHex12
-      ]
-
-parseImmediate16 :: Parser Word16
-parseImmediate16 =
-  label "16bit number" $
-    choice
-      [ try parseBin16
-      , parseHex16
-      ]
+warnIfOverUnderflow
+  :: forall a. (Bounded a, Integral a) => Parser Int -> Parser a
+warnIfOverUnderflow p = do
+  o <- getOffset
+  i <- p
+  when (i > fromIntegral (maxBound @a)) $
+    registerParseError $
+      TrivialError o (Just $ Label $ N.fromList "overfloow") S.empty
+  when (i < fromIntegral (minBound @a)) $
+    registerParseError $
+      TrivialError o (Just $ Label $ N.fromList "underfloow") S.empty
+  pure $ fromIntegral i
 
 -- Parser for memory operands (simplified, just accepting labels for now)
 parseMemory :: Parser Text
-parseMemory = T.pack <$> (char '[' *> some letterChar <* char ']')
+parseMemory = label "memory address" $ T.pack <$> (char '[' *> some letterChar <* char ']')
 
 parseVarOrLabelName :: Parser Text
 parseVarOrLabelName = do
@@ -136,22 +105,25 @@ parseVarOrLabelName = do
     match (letterChar >> takeWhileP Nothing (\c -> isAlphaNum c || c == '_'))
   pure t
 
+type OpPair (s :: Size) = (Operand s, Operand s)
+
 -- Parser for operands
-parseOperand :: Parser Operand
-parseOperand =
-  -- label "Instruction operand" $
-  choice
-    [ try $ label "register" $ RegOp <$> parseRegister
-    , label "immediate value" $
-        ImmOp
-          <$> choice
-            [ try $ RInt <$> parseDecimal
-            , try $ RW16 <$> parseImmediate16
-            , try $ RW8 <$> parseImmediate8
-            , RChar <$> parseChar
-            ]
-    , label "memory address" $ MemOp <$> parseMemory
-    ]
+parseOperand :: Maybe (SomeSized Operand) -> Parser (SomeSized OpPair)
+parseOperand op = label "Instruction operand" $ do
+  partialres <-
+    choice
+      [ try $ rewrapSized RegOp <$> parseRegister
+      , try $ rewrapSized ImmOp <$> parseImmediate
+      , SZS . MemOp <$> parseMemory
+      ]
+  case op of
+    Nothing -> pure partialres
+    Just o -> do
+      case (o, partialres) of
+        (SZ8 _, SZ8 _) -> pure partialres
+        (SZ16 _, SZ16 _) -> pure partialres
+        (SZS _, _) -> pure partialres
+        _ -> fail " "
 
 -- Parser for instructions
 parseInstruction :: Parser Instruction
@@ -163,26 +135,32 @@ parseInstruction =
         , binaryP ADD "add"
         , binaryP SUB "sub"
         , binaryP OR "or"
-        , INT <$> (L.symbol' hspace1 "int" *> parseImmediate8)
-        , JNS <$> (L.symbol' hspace1 "jns" *> parseVarOrLabelName)
-        , JMP <$> (L.symbol' hspace1 "jmp" *> parseVarOrLabelName)
-        , INC <$> (L.symbol' hspace1 "inc" *> parseOperand)
+        , singleP INT "int" (warnIfOverUnderflow parseImmediate)
+        , singleP JNS "jns" parseVarOrLabelName
+        , singleP JMP "jmp" parseVarOrLabelName
+        , singleP JE "je" parseVarOrLabelName
+        , singleP INC "inc" parseOperand
         , binaryP CMP "cmp"
-        , JE <$> (L.symbol' hspace1 "je" *> parseVarOrLabelName)
         , RET <$ L.symbol' hspace "ret"
         ]
   where
+    singleP constr txt arg =
+      constr <$> do
+        L.symbol' hspace1 txt *> arg
     binaryP constr txt = do
       L.symbol' hspace1 txt
-      constr
-        <$> label "op1" (L.lexeme hspace parseOperand)
-        <*> label "op2" (char ',' *> hidden hspace *> L.lexeme hspace parseOperand)
+      op1 <- label "op1" (L.lexeme hspace (parseOperand Nothing))
+      op2 <-
+        label
+          "op2"
+          (char ',' *> hidden hspace *> L.lexeme hspace (parseOperand (Just op1)))
+      pure $ constr
 
 parseDirective :: Parser Directive
 parseDirective =
   label "Compiler directive" $
     choice
-      [ ORG <$> (L.symbol' hspace1 "org" >> parseImmediate12)
+      [ ORG <$> (L.symbol' hspace1 "org" >> warnIfOverUnderflow parseImmediate)
       , END <$ L.symbol' hspace1 "end"
       , NAME
           <$> ( L.symbol' hspace1 "name" *> between "\"" "\"" (takeWhileP Nothing isAlphaNum)
@@ -194,16 +172,17 @@ parseDirective =
       choice
         [ do
             vname <-
-              T.toLower
-                <$> L.lexeme hspace (takeWhile1P (Just "variable char") isLetter)
-                  <?> "Variable name"
+              label "Variable name" $
+                T.toLower
+                  <$> L.lexeme hspace (takeWhile1P (Just "variable char") isLetter)
+
             L.symbol' hspace1 "db"
-            v <- sepBy1 (L.lexeme hspace parseImmediate8) (char ',')
+            v <- sepBy1 (L.lexeme hspace (warnIfOverUnderflow parseImmediate)) (char ',')
             when (vname == "db") $ fail "you cannot name a variable 'db'"
             pure $ DB $ Left (vname, v)
         , do
             L.symbol' hspace1 "db"
-            v <- sepBy1 (L.lexeme hspace parseImmediate8) (char ',')
+            v <- sepBy1 (L.lexeme hspace (warnIfOverUnderflow parseImmediate)) (char ',')
             pure $ DB $ Right v
         ]
 
@@ -231,18 +210,16 @@ parseAssembly =
     (sc *> some parseStatement <* eof)
 
 parseTestHelper :: Text -> IO (Maybe [Statement])
-parseTestHelper assemblyCode = do
-  case parseAssembly "test" assemblyCode of
-    Left err -> do
-      putStrLn "Error: "
-      putStrLn $ errorBundlePretty err
-      pure Nothing
-    Right statements -> do
-      -- traveabse_ print statements
-      pure $ Just statements
+parseTestHelper assemblyCode = case parseAssembly "test" assemblyCode of
+  Left err -> do
+    putStrLn "Error: "
+    putStrLn $ errorBundlePretty err
+    pure Nothing
+  Right statements -> do
+    -- traveabse_ print statements
+    pure $ Just statements
 
 parseTest :: IO (Maybe [Statement])
-parseTest = do
-  parseTestHelper "mov ah, \"text3243242moremore\""
+parseTest = parseTestHelper "mov ah, \"text3243242moremore\""
 
 -- mainLocal "mov ah, 3243242moremore\""

@@ -86,19 +86,11 @@ trans labelMap instrLoc = \case
     checkLabel label = case M.lookup label labelMap of
       Nothing -> error $ concat ["Label '", T.unpack label, "' not found'"]
       Just v -> v
-    putAsW8 :: RawValue -> Put =
-      putWord8 . \case
-        RW8 w -> w
-        RW16 w -> fromIntegral w
-        RInt w -> fromIntegral w
-        RChar w -> fromIntegral $ ord w
 
-    putAsW16 :: RawValue -> Put =
-      putWord16le . \case
-        RW8 w -> fromIntegral w
-        RW16 w -> w
-        RInt w -> fromIntegral w
-        RChar w -> fromIntegral $ ord w
+    putAsW8 :: Int -> Put
+    putAsW8 w = putWord8 $ fromIntegral w
+    putAsW16 :: Int -> Put
+    putAsW16 w = putWord16le $ fromIntegral w
 
 compileStatements :: [Statement] -> ByteString
 compileStatements = secondPass . firstPass
