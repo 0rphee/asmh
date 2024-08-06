@@ -37,6 +37,8 @@ common common-options
 
   default-extensions:
     ApplicativeDo
+    DataKinds
+    GADTs
     LambdaCase
     OverloadedStrings
     RecordWildCards

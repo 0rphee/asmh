@@ -36,10 +36,8 @@ tests = do
           "Basic parsing tests"
           [ testGroup
               "parseImmediate"
-              [ testCaseNum Bin 0b1010_1010 parseImmediate8
-              , testCaseNum Bin 0b1010_1010_1010_1010 parseImmediate16
-              , testCaseNum Hex 0x2A parseImmediate8
-              , testCaseNum Hex 0x0B01 parseImmediate16
+              [ testCaseNum Bin 0b1010_1010_1010_1010 parseImmediate
+              , testCaseNum Hex 0x0B01 parseImmediate
               ]
           ]
       , gd
@@ -68,7 +66,7 @@ golden = do
         ( do
             res <- fmap compileStatements . parseAssembly asmFile <$> T.readFile asmFile
             case res of
-              Left e -> error $ "Failed with parsing errors: \n" <> errorBundlePretty e
+              Left e -> fail $ "Failed with parsing errors: \n" <> errorBundlePretty e
               Right r -> pure $ fromStrict r
         ) -- action whose result is tested
       | asmFile <- asmFiles
