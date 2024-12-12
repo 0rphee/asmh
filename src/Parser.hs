@@ -105,25 +105,24 @@ parseVarOrLabelName = do
     match (letterChar >> takeWhileP Nothing (\c -> isAlphaNum c || c == '_'))
   pure t
 
-type OpPair (s :: Size) = (Operand s, Operand s)
-
 -- Parser for operands
-parseOperand :: Maybe (SomeSized Operand) -> Parser (SomeSized OpPair)
-parseOperand op = label "Instruction operand" $ do
-  partialres <-
-    choice
-      [ try $ rewrapSized RegOp <$> parseRegister
-      , try $ rewrapSized ImmOp <$> parseImmediate
-      , SZS . MemOp <$> parseMemory
-      ]
-  case op of
-    Nothing -> pure partialres
-    Just o -> do
-      case (o, partialres) of
-        (SZ8 _, SZ8 _) -> pure partialres
-        (SZ16 _, SZ16 _) -> pure partialres
-        (SZS _, _) -> pure partialres
-        _ -> fail " "
+parseOperand :: Parser (SomeSized Operand)
+parseOperand = label "Instruction operand" $ do
+  choice
+    [ try $ rewrapSized RegOp <$> parseRegister
+    , try $ rewrapSized ImmOp <$> parseImmediate
+    , SS SPS . MemOp <$> parseMemory
+    ]
+
+parseSecondOperand :: SizedProof s -> Parser (Operand s)
+parseSecondOperand s1 = label "Instruction operand" $ do
+  (SS s2 o) <- parseOperand
+  case (s1, s2) of
+    (SP8, SP16) -> fail ""
+    (SP16, SP8) -> fail ""
+    (SP8, SP8) -> pure o
+    (SP16, SP16) -> pure o
+    (SPS, SP16) -> pure o
 
 -- Parser for instructions
 parseInstruction :: Parser Instruction
@@ -147,6 +146,8 @@ parseInstruction =
     singleP constr txt arg =
       constr <$> do
         L.symbol' hspace1 txt *> arg
+    binaryP
+      :: (forall s. Operand s -> Operand s -> Instruction) -> Text -> Parser Instruction
     binaryP constr txt = do
       L.symbol' hspace1 txt
       op1 <- label "op1" (L.lexeme hspace (parseOperand Nothing))
@@ -154,7 +155,7 @@ parseInstruction =
         label
           "op2"
           (char ',' *> hidden hspace *> L.lexeme hspace (parseOperand (Just op1)))
-      pure $ constr
+      pure $ constr op1 op2
 
 parseDirective :: Parser Directive
 parseDirective =

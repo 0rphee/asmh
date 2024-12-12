@@ -1,5 +1,6 @@
 module Expr
   ( Size (..)
+  , SizedProof (..)
   , Register (..)
   , Label
   , Statement (..)
@@ -12,6 +13,7 @@ module Expr
   , rewrapSized
   , validate8
   , validate16
+  , haveCompatibleSizes
   )
 where
 
@@ -120,36 +122,47 @@ data Operand (s :: Size)
 -- TODO: proper memory addresses
 -- deriving (Show, Eq)
 
+data SizedProof (s :: Size) where
+  SP8 :: SizedProof SW8
+  SP16 :: SizedProof SW16
+  SPS :: SizedProof s
+
 data SomeSized (sized :: Size -> Type) where
-  SZ8 :: sized SW8 -> SomeSized sized
-  SZ16 :: sized SW16 -> SomeSized sized
-  SZS :: sized s -> SomeSized sized
+  SS :: SizedProof s -> sized s -> SomeSized sized
 
 rewrapSized
   :: forall sized sized2
    . (forall (y :: Size). sized y -> sized2 y)
   -> SomeSized sized
   -> SomeSized sized2
-rewrapSized con s = case s of
-  SZ8 x -> SZ8 (con x)
-  SZ16 x -> SZ16 (con x)
-  SZS x -> SZS (con x)
+rewrapSized con (SS s x) = SS s (con x)
+
+haveCompatibleSizes
+  :: SomeSized sized
+  -> SomeSized sized
+  -> (forall s1 s2. sized s1 -> sized s2 -> r)
+  -> r
+  -> r
+haveCompatibleSizes (SS s1 x) (SS s2 y) f e = case (s1, s2) of
+  (SP8, SP16) -> e
+  (SP16, SP8) -> e
+  _ -> f x y
 
 validate8
   :: (forall s. sized s -> Maybe (sized SW8)) -> SomeSized sized -> Maybe (sized SW8)
-validate8 fun = \case
-  SZ8 x -> Just x
-  SZ16 x -> Nothing
-  SZS x -> fun x
+validate8 fun (SS s x) = case s of
+  SP8 -> Just x
+  SP16 -> Nothing
+  SPS -> fun x
 
 validate16
   :: (forall s. sized s -> Maybe (sized SW16))
   -> SomeSized sized
   -> Maybe (sized SW16)
-validate16 fun = \case
-  SZ8 x -> Nothing
-  SZ16 x -> Just x
-  SZS x -> fun x
+validate16 fun (SS s x) = case s of
+  SP8 -> Nothing
+  SP16 -> Just x
+  SPS -> fun x
 
 instance Display (Operand s) where
   {-# INLINE displayBuilder #-}
