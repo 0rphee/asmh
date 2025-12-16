@@ -40,7 +40,7 @@ jobs:
       - uses: haskell-actions/setup@v2
         id: setup-haskell-cabal
         with:
-          ghc-version: '9.6.5'
+          ghc-version: '9.6.7'
 
       # CACHING
       - name: Cache ~/.cabal/store
