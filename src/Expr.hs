@@ -10,11 +10,10 @@ module Expr
   )
 where
 
-import Bits.Show (showFiniteBits)
 import Data.String (IsString (..))
 import Data.Text (Text)
+import Data.Text.Builder.Linear (Builder)
 import Data.Text.Display
-import Data.Text.Lazy.Builder (Builder)
 import Data.Word
 import Numeric (showHex)
 import Prelude hiding (take)
@@ -164,7 +163,7 @@ instance Display Directive where
   {-# INLINE displayBuilder #-}
   displayBuilder = \case
     ORG w -> "ORG" <> displayBuilder (RW16 w)
-    DB ei -> "TODO NOT DONE"
+    DB _ei -> "TODO NOT DONE"
     END -> "END"
     NAME txt -> "NAME \"" <> displayBuilder txt <> "\""
 

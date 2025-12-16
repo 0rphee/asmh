@@ -12,7 +12,7 @@ extra-source-files:
   CHANGELOG.md
   README.md
 
-tested-with: ghc ==9.4.8 || ==9.6.5
+tested-with: ghc ==9.4.8 || ==9.6.7
 
 common common-options
   default-language: GHC2021
@@ -55,16 +55,15 @@ library
 
   build-depends:
     base >=4.7 && <5,
-    bits-show,
     bytestring,
-    cereal,
+    cereal >=0.5 && <1,
     containers,
     filepath,
-    megaparsec,
-    path,
-    text,
-    text-display,
-    vector,
+    megaparsec >=9.7 && <10,
+    text >=2.1 && <3,
+    text-builder-linear >=0.1 && <1,
+    text-display >=1 && <2,
+    vector >=0.13 && <1,
 
 executable asmh
   import:
@@ -85,16 +84,10 @@ executable asmh
   build-depends:
     asmh,
     base >=4.7 && <5,
-    bits-show,
-    bytestring,
-    cereal,
-    filepath,
     githash,
     megaparsec,
     optparse-applicative,
-    path,
     text,
-    vector,
 
 -- opt-env-conf,
 test-suite asmh-test
@@ -112,13 +105,12 @@ test-suite asmh-test
   build-depends:
     asmh,
     base >=4.7 && <5,
-    bits-show,
+    bits-show >=0.0 && <1,
     bytestring,
     filepath,
     megaparsec,
-    tasty,
+    tasty >=1.5 && <2,
     tasty-golden,
     tasty-hunit,
     tasty-quickcheck,
     text,
-    text-display,
