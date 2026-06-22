@@ -9,7 +9,7 @@ jobs:
   # fourmolu:
   #   runs-on: ubuntu-latest
   #   steps:
-  #   - uses: actions/checkout@v6
+  #   - uses: actions/checkout@v7
 
   #   - uses: haskell-actions/run-fourmolu@v10
   #     with:
@@ -24,7 +24,7 @@ jobs:
     permissions:
       security-events: write # Needed to upload results to GitHub code scanning.
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
 
     - name: 'Set up HLint'
       uses: haskell-actions/hlint-setup@v2
